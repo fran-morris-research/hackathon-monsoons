@@ -137,6 +137,7 @@ def parallelise(idx):
 #######################
 # sim = simulation name string. Must correspond to one with a path specified in load_file
 # var = STASH variable name (not code) present in iris list of a native grid UM file
+# outdir = the directory to write out to
 # filelist = the "stream" in which variable is stored. One of [a,b,c,d]
 # month = numerical value of month we wish to calculate mean for
 # hour = option to specify mean state at a given hour. If using coarsen (recommended), redundant as code fast enough to do them all efficiently
@@ -146,6 +147,7 @@ def parallelise(idx):
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--sim", required=False, default="n1280_GAL9")
 parser.add_argument("-v", "--var", required=True)
+parser.add_argument("-o", "--outdir", required=True)
 parser.add_argument("-f", "--filelist", required=True)
 parser.add_argument("-m", "--month", required=True,type=int)
 parser.add_argument("-hr", "--hour", required=False, type=int)
@@ -156,9 +158,11 @@ args = parser.parse_args()
 sim=args.sim
 var=args.var
 file_list=args.filelist
+outdir=args.outdir
 
-# NOTE RANGE CROP - only care about summer
-period=pd.date_range("2020-05-01","2020-10-31")
+# DATE RANGE CROP
+# period=pd.date_range("2020-05-01","2020-10-31")
+period=pd.date_range("2020-02-01","2021-03-01") #whole dyamond period
 period=period[period.month==args.month]
 
 try:
@@ -214,14 +218,14 @@ if args.hour is None:
 
     month=calendar.month_abbr[args.month]
     if args.coarsen is None:
-        out.to_netcdf(f"/gws/nopw/j04/kscale/USERS/bmaybee/DYAMOND3/mean_states/{sim}_mean_{month}_{args.var}.nc")
+        out.to_netcdf(f"{outdir}/{sim}_mean_{month}_{args.var}.nc")
     else:
-        out.to_netcdf(f"/gws/nopw/j04/kscale/USERS/bmaybee/DYAMOND3/mean_states/{sim}_mean_{month}_{args.var}_0p5deg.nc")
+        out.to_netcdf(f"{outdir}/{sim}_mean_{month}_{args.var}_0p5deg.nc")
         
 else:
     out=xr.DataArray(Sum/Count,coords=ref.coords,name=var)
     month=calendar.month_abbr[args.month]
     if args.coarsen is None:
-        out.to_netcdf(f"/gws/nopw/j04/kscale/USERS/bmaybee/DYAMOND3/mean_states/{sim}_mean_{month}_{args.hour}Z_{args.var}.nc")
+        out.to_netcdf(f"{outdir}/{sim}_mean_{month}_{args.hour}Z_{args.var}.nc")
     else:
-        out.to_netcdf(f"/gws/nopw/j04/kscale/USERS/bmaybee/DYAMOND3/mean_states/{sim}_mean_{month}_{args.hour}Z_{args.var}_0p5deg.nc")
+        out.to_netcdf(f"{outdir}/{sim}_mean_{month}_{args.hour}Z_{args.var}_0p5deg.nc")
