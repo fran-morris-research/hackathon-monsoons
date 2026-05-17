@@ -8,6 +8,7 @@ Contains useful scripts for handling kscale data.
 
 import numpy as np
 import xarray as xr
+import iris
 
 def haversine(lon1, lat1, lon2, lat2):
     """
