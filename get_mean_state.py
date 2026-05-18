@@ -160,6 +160,11 @@ var=args.var
 file_list=args.filelist
 outdir=args.outdir
 
+minlon=20
+maxlon=50
+minlat=-30
+maxlat=0
+
 # DATE RANGE CROP
 # period=pd.date_range("2020-05-01","2020-10-31")
 period=pd.date_range("2020-02-01","2021-03-01") #whole dyamond period
@@ -186,8 +191,8 @@ elif var=="precip" and sim in ["n1280_GAL9","n1280_10km-CoMA9"]:
     var="precipitation_flux"
 
 psize=10
-p=Pool(psize)
 fact=int(len(period)/psize)
+p=Pool(psize)
 out=p.map(parallelise,np.arange(psize))
 # stack the sums
 sums=np.stack([part[0] for part in out])
@@ -197,13 +202,13 @@ counts=np.stack([part[1] for part in out])
 Count=np.nansum(counts,axis=0)
 
 if file_list=="c" or file_list=="d":
-    ref=load_file(pd.Timestamp("2020-%02d-01 12:00"%args.month),"x_wind",sim=sim,p=plev,stream="c").isel(time=0)
+    ref=load_file(pd.Timestamp("2020-%02d-01 12:00"%args.month),"x_wind",sim=sim,p=plev,stream="c",minlon=minlon,maxlon=maxlon,minlat=minlat,maxlat=maxlat).isel(time=0)
     if args.coarsen is None:
         hr_coords=[hr%24 for hr in np.arange(3,25,3)]
     else:
         hr_coords=[6,12,18,0]
 else:
-    ref=load_file(pd.Timestamp("2020-%02d-01 12:00"%args.month),var,sim=sim,stream=file_list).isel(time=0)
+    ref=load_file(pd.Timestamp("2020-%02d-01 12:00"%args.month),var,sim=sim,stream=file_list,minlon=minlon,maxlon=maxlon,minlat=minlat,maxlat=maxlat).isel(time=0)
     hr_coords=[hr%24 for hr in np.arange(1,25)]
 
 # calculate means and turn into xarray objects
