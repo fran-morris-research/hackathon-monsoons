@@ -6,4 +6,13 @@
 > [Source](https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_AnnexV.pdf) The AR6 global monsoon area is represented by the black contour lines. The AR6 regional monsoons are: North American monsoon (NAmerM, shaded magenta), South American monsoon (SAmerM, shaded dark orange), West African monsoon (WAfriM, shaded grey), South and South East Asian monsoon (SAsiaM, shaded pink), East Asian monsoon (EAsiaM, shaded purple) and Australian–Maritime Continent monsoon (AusMCM, shaded yellow). Areas over Central America and equatorial South America and southern Africa (dotted red and dotted magenta, respectively) are highlighted but not identified as specific regional monsoons (see explanation in the main text). For each regional monsoon, the seasonal characteristics associated with each domain are specified in the main text.
 
 ## Regions
-tbd? 
+
+regions = [
+    {"lat_min": 0, "lat_max": 25, "lon_min": -25, "lon_max": 20, "name": "West Africa"},
+    {"lat_min": 0, "lat_max": 35, "lon_min": 50, "lon_max": 110, "name": "South Asia"},
+    {"lat_min": 15, "lat_max": 50, "lon_min": 95, "lon_max": 150, "name": "East Asia"},
+    {"lat_min": 0, "lat_max": 35, "lon_min": -120, "lon_max": 40, "name": "North America"},
+    {"lat_min": -35, "lat_max": -5, "lon_min": 5, "lon_max": 50, "name": "Southern Africa"},
+    {"lat_min": -30, "lat_max": 20, "lon_min": 100, "lon_max": 160, "name": "Maritime Continent"},
+    {"lat_min": -35, "lat_max": 10, "lon_min": -90, "lon_max": -30, "name": "South America"},
+]
