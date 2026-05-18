@@ -1,30 +1,112 @@
-""" utils.py
+"""utils.py
 
 Code extracted from https://github.com/BMaybee/East_Atlantic_vortices/blob/b885038517f5e0698fdcdef68790b6539093423c/get_mean_state.py
 and https://github.com/BMaybee/East_Atlantic_vortices/blob/b885038517f5e0698fdcdef68790b6539093423c/composite_sampling.py
+and https://github.com/digital-earths-UK-hackathon/hk26/blob/main/notebooks/utils.py
 
 Contains useful scripts for handling kscale data.
 """
 
-import numpy as np
-import xarray as xr
+import math as maths
+
+import cartopy.crs as ccrs
+import easygems.healpix as egh
 import iris
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import xarray as xr
 
-def haversine(lon1, lat1, lon2, lat2):
-    """
-    Calculate the great circle distance in kilometers between two points 
-    on the earth (specified in decimal degrees)
-    """
-    # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(np.deg2rad, [lon1, lat1, lon2, lat2])
 
-    # haversine formula 
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
-    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-    c = 2 * np.asin(np.sqrt(a)) 
-    r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
-    return c * r
+def hp_mods(ds):
+    """Convert from CF-compliant to be compatible with egh, and attach lat/lon coords"""
+    return ds.rename({"healpix_index": "cell"}).pipe(egh.attach_coords)
+
+
+def plot_all_fields(ds_plot):
+    """Plot all fields for a given dataset. Assumes that each field is 2D - i.e. sel(time=..., [pressure=...]) has been applied"""
+    zoom = ds_plot.crs.attrs["refinement_level"]
+    projection = ccrs.Robinson(central_longitude=0)
+    # Do not plot orog, land surf.
+    plot_vars = [
+        (name, da)
+        for name, da in ds_plot.data_vars.items()
+        if name not in {"orog", "sftlf", "weights"}
+    ]
+    rows = maths.ceil(len(plot_vars) / 5)
+    fig, axes = plt.subplots(
+        rows,
+        5,
+        figsize=(30, rows * 20 / 6),
+        subplot_kw={"projection": projection},
+        layout="constrained",
+    )
+    if "pressure" in ds_plot.coords:
+        plt.suptitle(f"{ds_plot.simulation} z{zoom} @{float(ds_plot.pressure)}hPa")
+    else:
+        plt.suptitle(f"{ds_plot.simulation} z{zoom}")
+
+    for ax, (name, da) in zip(axes.flatten(), plot_vars):
+        if name == "mrsol":
+            da = da.isel(depth=0)
+            name = "mrsol@depth=0"
+        time = pd.Timestamp(ds_plot.time.values.item())
+
+        if abs(da.max() + da.min()) / (da.max() - da.min()) < 0.5:
+            # data looks like it needs a diverging cmap.
+            # figure out some nice bounds.
+            pl, pu = np.percentile(da.values[~np.isnan(da.values)], [2, 98])
+            vmax = np.abs([pl, pu]).max()
+            kwargs = dict(
+                cmap="bwr",
+                vmin=-vmax,
+                vmax=vmax,
+            )
+        else:
+            kwargs = {}
+        ax.set_title(f"time: {time} - {name}")
+        ax.set_global()
+        im = egh.healpix_show(da, ax=ax, **kwargs)
+        long_name = da.long_name
+
+        plt.colorbar(im, label=f"{long_name} ({da.attrs.get('units', '-')})")
+        ax.coastlines()
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    # Earth radius in kilometers
+    R = 6371.0
+
+    # Convert degrees to radians
+    lat1, lon1, lat2, lon2 = map(np.radians, [lat1, lon1, lat2, lon2])
+
+    # Differences
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    # Haversine formula
+    a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    return R * c
+
+
+# def haversine(lon1, lat1, lon2, lat2):
+#     """
+#     Calculate the great circle distance in kilometers between two points
+#     on the earth (specified in decimal degrees)
+#     """
+#     # convert decimal degrees to radians
+#     lon1, lat1, lon2, lat2 = map(np.deg2rad, [lon1, lat1, lon2, lat2])
+
+#     # haversine formula
+#     dlon = lon2 - lon1
+#     dlat = lat2 - lat1
+#     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+#     c = 2 * np.asin(np.sqrt(a))
+#     r = 6371  # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+#     return c * r
 
 
 # function to convert TOA OLR to empirically corrected brightness temperature (Yang and Slingo, 2001)
@@ -49,7 +131,18 @@ def tb_from_olr(OLR):
 #    - coarsen - if false, do not interpolate to a coarser grid; if not false, can be set to the degree resolution to coarsen to
 ###################
 def load_file(
-    date, var_name, sim="n1280_GAL9", relon=True, stream="c", p=slice(None, None), minlon=-180, maxlon=180, minlat=-90, maxlat=90, coarsen_grid=False, coarsen_timestep=1
+    date,
+    var_name,
+    sim="n1280_GAL9",
+    relon=True,
+    stream="c",
+    p=slice(None, None),
+    minlon=-180,
+    maxlon=180,
+    minlat=-90,
+    maxlat=90,
+    coarsen_grid=False,
+    coarsen_timestep=1,
 ):
     date_str = "%04d%02d%02d" % (date.year, date.month, date.day)
     # data in 12 hour chunks, labelled 0 or 12, so get appropriate value.
@@ -63,7 +156,7 @@ def load_file(
                 ),
                 var_name,
             )[-1]
-        ).sel(latitude=slice(minlat,maxlat))
+        ).sel(latitude=slice(minlat, maxlat))
     elif sim == "n2560_RAL3p3":
         ds = xr.DataArray.from_iris(
             iris.load(
@@ -72,7 +165,7 @@ def load_file(
                 ),
                 var_name,
             )[-1]
-        ).sel(latitude=slice(minlat,maxlat))
+        ).sel(latitude=slice(minlat, maxlat))
     elif sim == "n2560_RAL3p3_tuned":
         ds = xr.DataArray.from_iris(
             iris.load(
@@ -81,7 +174,7 @@ def load_file(
                 ),
                 var_name,
             )[0]
-        ).sel(latitude=slice(minlat,maxlat))
+        ).sel(latitude=slice(minlat, maxlat))
     elif sim == "n1280_10km-CoMA9":
         ds = xr.DataArray.from_iris(
             iris.load(
@@ -90,7 +183,7 @@ def load_file(
                 ),
                 var_name,
             )[0]
-        ).sel(latitude=slice(minlat,maxlat))
+        ).sel(latitude=slice(minlat, maxlat))
     elif sim == "n1280_GAL9":
         ds = xr.DataArray.from_iris(
             iris.load(
@@ -99,7 +192,7 @@ def load_file(
                 ),
                 var_name,
             )[-1]
-        ).sel(latitude=slice(minlat,maxlat))
+        ).sel(latitude=slice(minlat, maxlat))
 
     if stream == "c" or stream == "d":
         ds = ds.sel(pressure=p)
@@ -110,12 +203,15 @@ def load_file(
             .sortby("longitude")
             .sel(longitude=slice(minlon, maxlon))
         )
-    if coarsen_grid != False: 
+    if coarsen_grid != False:
         # optional coarsening step; currently specified just for vertical profiles
-        # spatial coarsening defined by degree spacing specified by coarsen_grid 
-        # temporal coarsening defined by hour spacing specified by coarsen_timestep 
+        # spatial coarsening defined by degree spacing specified by coarsen_grid
+        # temporal coarsening defined by hour spacing specified by coarsen_timestep
         # TODO: change this to be area-weighted regridding probably
-        lons, lats = np.arange(minlon, maxlon, coarsen), np.arange(minlat, maxlat, coarsen_grid)
+        lons, lats = (
+            np.arange(minlon, maxlon, coarsen),
+            np.arange(minlat, maxlat, coarsen_grid),
+        )
         if stream == "c" or stream == "d":
             ds = (
                 ds[ds.time.dt.hour.isin(np.arange(0, 24, coarsen_timestep))]
