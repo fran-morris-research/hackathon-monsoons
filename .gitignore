@@ -3,5 +3,4 @@
 *.out
 *.err
 *.pyc
-*.ipynb_checkpoints/*
-onset_identification/.ipynb_checkpoints/healpix_timeseries-checkpoint.ipynb
+*/.ipynb_checkpoints/*
