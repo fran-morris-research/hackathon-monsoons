@@ -8,6 +8,62 @@ import cftime
 import requests
 import scipy.interpolate as sci
 
+def RefineOns(pp,thrs):  #This function is very similar to the main loop for the seasonal forecast
+
+    #end of the period: day when the cummulative precipitation reaches 50% 
+    #of the total precipitation during the onset period envelope
+    tot=pp.cumsum().values
+    if tot[-1] < thrs: #not enough precipitation in the season
+        ld=np.nan; fd=np.nan
+    else:
+        ld=(tot >= 0.5*tot[-1]).nonzero()[0][0]
+
+        #Refining the beginning of the onset as the first date with significant precipitation    
+        #not followed by a period with more than 10 days with low precip. 
+        #(signifincant precip = 10% of filtered precipitation for the water year )
+        #Rolling mean - 3 days
+        pp3=pp.rolling(time=3,center=True).mean()
+
+        cnd=np.where(pp3.values <= thrs,1,0)
+        
+        fd1,ln1=optb.FindOnsetPeriods(cnd,1) #Identifying precipitaiton break periods
+        
+        #Checking for long periods without precipitation after the end of the onset. 
+        #If any period longer than 10 days, adjust the end of the onset    vld=(np.asarray(fd1)+np.asarray(ln1) > ld).nonzero()[0]
+        vld=(np.asarray(fd1)+np.asarray(ln1) > ld).nonzero()[0]
+        if (len(vld) > 0):
+            pst=(np.asarray(ln1)[vld] > 12).nonzero()[0]
+            if(len(pst) > 0): ld=fd1[vld[pst[-1]]]+ln1[vld[pst[-1]]]
+        
+        #removing breaks that happened at the end of the envelope. 
+        rmv=(np.asarray(fd1)+np.asarray(ln1) >= ld).nonzero()[0]
+        fd2,ln2=optb.DelCandidate(rmv,fd1,ln1)
+
+        if(len(fd2) > 0):
+
+            #removing breaks that happened at the end of the envelope. 
+            #if the cumulative precipitation at the beginning of the period is larger than 33%
+            #of the total precipitation during the onset period envelope, then remove the 
+            #break period from the list
+            rmv=(tot[fd2]/tot[-1] > 0.3).nonzero()[0]
+            fd3,ln3=optb.DelCandidate(rmv,fd2,ln2)
+
+            #Now locating the longest period of low precipitation
+            if(len(ln3) > 0):
+                mxl=np.nanmax(np.asarray(ln3))
+                #check for drawns. In these cases, chose the latest one
+                mx=(ln3 == mxl).nonzero()[0][-1] 
+                fd=fd3[mx]+ln3[mx] #at the end of the maximum period of low precipitation
+            elif (len(fd2) > 0): #in this case, will not consider teh removal of days with tot > 33%tot[-1]
+                mxl=np.nanmax(np.asarray(ln2))
+                #check for drawns. In these cases, chose the latest one
+                mx=(ln2 == mxl).nonzero()[0][-1] 
+                fd=fd2[mx]+ln2[mx] #at the end of the maximum period of low precipitation
+            else:fd=0
+        else: fd=0 #no onset period found
+
+    return fd,ld
+
 #############################
 #Main functions related to Onset period analysys
 ##############################
