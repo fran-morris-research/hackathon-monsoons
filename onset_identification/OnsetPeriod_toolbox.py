@@ -24,7 +24,7 @@ def RefineOns(pp,thrs):  #This function is very similar to the main loop for the
         #Rolling mean - 3 days
         pp3=pp.rolling(time=3,center=True).mean()
 
-        cnd=np.where(pp3.values <= thrs,1,0)
+        cnd=np.where(pp3 <= thrs,1,0)
         
         fd1,ln1=optb.FindOnsetPeriods(cnd,1) #Identifying precipitaiton break periods
         
