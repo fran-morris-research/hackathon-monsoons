@@ -26,7 +26,7 @@ def RefineOns(pp,thrs):  #This function is very similar to the main loop for the
 
         cnd=np.where(pp3 <= thrs,1,0)
         
-        fd1,ln1=optb.FindOnsetPeriods(cnd,1) #Identifying precipitaiton break periods
+        fd1,ln1=FindOnsetPeriods(cnd,1) #Identifying precipitaiton break periods
         
         #Checking for long periods without precipitation after the end of the onset. 
         #If any period longer than 10 days, adjust the end of the onset    vld=(np.asarray(fd1)+np.asarray(ln1) > ld).nonzero()[0]
@@ -37,7 +37,7 @@ def RefineOns(pp,thrs):  #This function is very similar to the main loop for the
         
         #removing breaks that happened at the end of the envelope. 
         rmv=(np.asarray(fd1)+np.asarray(ln1) >= ld).nonzero()[0]
-        fd2,ln2=optb.DelCandidate(rmv,fd1,ln1)
+        fd2,ln2=DelCandidate(rmv,fd1,ln1)
 
         if(len(fd2) > 0):
 
@@ -46,7 +46,7 @@ def RefineOns(pp,thrs):  #This function is very similar to the main loop for the
             #of the total precipitation during the onset period envelope, then remove the 
             #break period from the list
             rmv=(tot[fd2]/tot[-1] > 0.3).nonzero()[0]
-            fd3,ln3=optb.DelCandidate(rmv,fd2,ln2)
+            fd3,ln3=DelCandidate(rmv,fd2,ln2)
 
             #Now locating the longest period of low precipitation
             if(len(ln3) > 0):
