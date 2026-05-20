@@ -85,7 +85,7 @@ class ConvertPickleToCSV:
                 data_full = pickle.load(f)
 
             lon1, lon2 = -180, 180
-            lat1, lat2 = -45, 45
+            lat1, lat2 = -50, 50
             
             region = {"lons": (lon1, lon2), "lats": (lat1, lat2)}
             
@@ -151,9 +151,11 @@ class ConvertPickleToCSV:
 
 if __name__ == "__main__":
 
+    models = ["n1280_CoMA9", "n1280_GAL9_v2", "n2560_CoMA9_hier_v2", "n2560_RAL3p3_tuned"]
+
     start_date = datetime.datetime(2020,2,1)
     end_date = datetime.datetime(2021,2,2)
-    model_id = "n2560_CoMA9_hier_v2"
+    model_id = models[-1]
 
     dictionary = {  "start_date": start_date,
                     "end_date": end_date,
