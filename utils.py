@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+import healpy as hp
 
 def healpix_zoom_to_grid_area_match(zoom):
     nside = 2.0**zoom
