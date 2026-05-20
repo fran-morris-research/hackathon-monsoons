@@ -66,6 +66,9 @@ def format_x_and_y_ticks(ax: plt.axes, xlocs: list, ylocs: list):
 
     return ax
 
+variable_names = {"uwnd": "eastward wind",
+                  "vwnd": "northward wind"}
+
 # Headers for use in calls to print
 h1a='<<<========================================================\n'
 h1b='========================================================>>>\n'
@@ -156,6 +159,11 @@ class PlotERA5bias:
 
         """
 
+        era5_var = {"uwnd": "u", 
+                    "vwnd": "v"}
+        model_var = {"uwnd": "ua",
+                     "vwnd": "va"}
+
         # Open catalog and print hk26 available models.
         url = 'https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml'
         cat = intake.open_catalog(url)['UK']
@@ -166,10 +174,10 @@ class PlotERA5bias:
         # Monthly means
         ds3h = sim_cat(zoom=8, time='PT3H').to_dask().pipe(hp_mods)
         ds3h_plot = ds3h.sel(pressure=self.level).resample(time="1D").mean().resample(time="1ME").mean()
-        ds3h_plot = ds3h_plot.ua
+        ds3h_plot = ds3h_plot[model_var["uwnd"]]
 
         ds_era5 = cat['ERA5'](zoom=8).to_dask().pipe(egh.attach_coords)
-        ds_era5_monthly_mean = ds_era5.u.sel(level=self.level, time=slice(datetime.datetime(2020,1,1), datetime.datetime(2021,3,2)))
+        ds_era5_monthly_mean = ds_era5[era5_var["uwnd"]].sel(level=self.level, time=slice(datetime.datetime(2020,1,1), datetime.datetime(2021,3,2)))
 
         region_bounds = self.find_regions(self.region)
         lat1, lat2, lon1, lon2 = region_bounds["lat_min"], region_bounds["lat_max"], region_bounds["lon_min"],  region_bounds["lon_max"]
@@ -209,7 +217,7 @@ class PlotERA5bias:
 
         plt.suptitle(self.model_id, y=0.85)
             
-        plt.savefig(f"figures/{self.model_id}_era5_bias_{self.region.replace(' ', '_')}_{self.variable}_{self.level}.png", dpi=300, bbox_inches="tight")
+        plt.savefig(f"figures/era5_bias_{self.region.replace(' ', '_')}_{self.variable}_{self.level}_{self.model_id}.png", dpi=300, bbox_inches="tight")
         plt.show()
 
 
@@ -224,10 +232,10 @@ if __name__ == "__main__":
         input_data = json.load(json_file) 
 
     # Get all relevant information from input file
-    label = "Eastward wind bias to ERA5 at 850 hPa (m/s)"
     variable = input_data["variable"]
     region = input_data["region"]
     level = float(input_data["level"])
+    label = f"{variable_names[variable].title()} bias to ERA5 at {int(level)} hPa (m/s)"
     model_id = input_data["model"]
 
     dictionary = {  "label": label,
