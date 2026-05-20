@@ -36,6 +36,8 @@ def onset_period(
     refine=False,
     precip_threshold=None,
     intensity_threshold=None,
+    fwin=60,
+    minlen=30
 ):
     if deltat == None:
         deltat = pp.time.dt.dayofyear[0].item()
@@ -90,6 +92,8 @@ def onset_period_1d(
     refine=False,
     precip_threshold=None,
     intensity_threshold=None,
+    fwin=60,
+    minlen=30
 ):
     """
     Apply onset_period to one grid-cell time series.
@@ -111,6 +115,8 @@ def onset_period_1d(
         refine=refine,
         precip_threshold=precip_threshold,
         intensity_threshold=intensity_threshold,
+        fwin=fwin,
+        minlen=minlen,
     )
 
     first_out = np.full(max_periods, np.nan)
