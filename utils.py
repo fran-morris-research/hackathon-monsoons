@@ -17,6 +17,12 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+def get_nn_lon_lat_index(nside, lons, lats):
+    lons2, lats2 = np.meshgrid(lons, lats)
+    return xr.DataArray(
+        hp.ang2pix(nside, lons2, lats2, nest=True, lonlat=True),
+        coords=[("latitude", lats), ("longitude", lons)],
+    )
 
 def hp_mods(ds):
     """Convert from CF-compliant to be compatible with egh, and attach lat/lon coords"""
