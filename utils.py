@@ -17,6 +17,21 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+def healpix_zoom_to_grid_area_match(zoom):
+    nside = 2.0**zoom
+
+    # Healpix pixel area
+    pixel_area = 4 * np.pi / (12 * nside**2)
+
+    # Angular resolution
+    theta = np.sqrt(pixel_area)
+
+    # Compute nlon, nlat
+    nlon = int(round(2 * np.pi / theta))
+    nlat = int(round(np.pi / theta))
+
+    return nlon, nlat
+
 def get_nn_lon_lat_index(nside, lons, lats):
     lons2, lats2 = np.meshgrid(lons, lats)
     return xr.DataArray(
