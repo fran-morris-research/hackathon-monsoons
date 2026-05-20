@@ -90,7 +90,7 @@ class PlotERA5bias:
         self.__dict__.update(kwargs)
         self.verbose = True
 
-        if variable not in ["uwnd"]:
+        if variable not in ["uwnd", "vwnd"]:
             raise UserWarning
         
         self.plotBias(self.region, self.model_id)
@@ -187,7 +187,7 @@ class PlotERA5bias:
         fig, axes = plt.subplots(3,5, figsize=(20,15), subplot_kw={'projection': projection})
            
         cmap = plt.get_cmap('PuOr_r')
-        v = np.linspace(-14,14,8)
+        v = np.linspace(-14,14, 8)
         norm = BoundaryNorm(v, ncolors=cmap.N, extend="both")
         
         for i, ax in enumerate(axes.ravel()):

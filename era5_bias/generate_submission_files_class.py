@@ -172,8 +172,7 @@ if __name__ == "__main__":
     time_out = "01:00:00"
     no_files_in_batch = 122
    
-
-    variables = ["uwnd"]
+    variables = ["vwnd", "uwnd"]
     levels = ["850", "200"]
     regions = ["West Africa", "South Asia", "East Asia", "North America", "Southern Africa", "Maritime Continent", "South America"]
     models =  ["um_glm_n1280_CoMA9_hk26", "um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_CoMA9_hk26",
