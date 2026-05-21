@@ -17,7 +17,7 @@ if project_root not in sys.path:
 # Filter out annoying warning.
 import warnings
 
-from utils import get_nn_lon_lat_index, haversine, hp_mods
+from utils import get_nn_lon_lat_index, haversine, hp_mods, hp_to_latlon
 
 warnings.filterwarnings(
     "ignore",
@@ -26,7 +26,7 @@ warnings.filterwarnings(
 )
 
 import OnsetPeriod_toolbox as optb
-from onset_utils import hp_to_latlon, onset_period, onset_period_1d, seasonality_index
+from onset_utils import onset_period, onset_period_1d, seasonality_index
 
 print("imports done")
 max_periods = 2
