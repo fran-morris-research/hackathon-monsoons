@@ -37,6 +37,10 @@ zooms = [7, 8,9,]
 labels = ["(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", "(h)", "(i)", "(j)", "(k)"]
 projection = ccrs.PlateCarree()
 
+# Open catalog.
+url = 'https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml'
+cat = intake.open_catalog(url)['UK']
+
 for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
     sim_cat = cat[sim]
     fig, axes = plt.subplots(
@@ -51,10 +55,10 @@ for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
     for zoom_ix, zoom in enumerate(zooms):
         print(sim,zoom)
         ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
-        ds_latlon = hp_to_latlon(ds)
+        ds_latlon = hp_to_latlon(ds,zoom)
         pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
         pp_latlon*=3600
-        pp_latlon.units="mm h-1"
+        pp_latlon["units"]="mm h-1"
         first_days, last_days = xr.apply_ufunc(
             onset_period_1d,
             pp_latlon,

@@ -18,7 +18,7 @@ import pandas as pd
 import xarray as xr
 import healpy as hp
 
-def hp_to_latlon(ds):
+def hp_to_latlon(ds,zoom):
     import ast
     domain_bounds = ast.literal_eval(ds.attrs.get("regional_bounds"))
     lon1 = domain_bounds["lower_left_lon"]
