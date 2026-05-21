@@ -16,6 +16,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+import healpy as hp
+
+def hp_to_latlon(ds,zoom):
+    import ast
+    domain_bounds = ast.literal_eval(ds.attrs.get("regional_bounds"))
+    lon1 = domain_bounds["lower_left_lon"]
+    lon2 = domain_bounds["upper_right_lon"]
+    lat1 = domain_bounds["lower_left_lat"]
+    lat2 = domain_bounds["upper_right_lat"]
+    
+    # Call function to compute nlon, nlat based on zoom level
+    nlon, nlat = healpix_zoom_to_grid_area_match(zoom) #, lat1, lat2, lon1, lon2)
+    lons = np.linspace(lon1, lon2, nlon)
+    lats = np.linspace(lat1, lat2, nlat)
+    
+    # Get healpix_index coord corresponding to lat/lon mesh
+    idx = get_nn_lon_lat_index(2**zoom, lons, lats)
+
+    return ds.sel(cell=idx)
+
+def healpix_zoom_to_grid_area_match(zoom):
+    nside = 2.0**zoom
+
+    # Healpix pixel area
+    pixel_area = 4 * np.pi / (12 * nside**2)
+
+    # Angular resolution
+    theta = np.sqrt(pixel_area)
+
+    # Compute nlon, nlat
+    nlon = int(round(2 * np.pi / theta))
+    nlat = int(round(np.pi / theta))
+
+    return nlon, nlat
 
 def get_nn_lon_lat_index(nside, lons, lats):
     lons2, lats2 = np.meshgrid(lons, lats)
