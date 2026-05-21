@@ -14,4 +14,4 @@ module load jaspy
 source ~/.bashrc
 conda activate /home/users/rwjones/.conda/envs/hk26_env
 
-python get_seasonal_mean_global.py
+python get_seasonal_mean_global-Copy1.py
