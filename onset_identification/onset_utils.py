@@ -32,7 +32,7 @@ import OnsetPeriod_toolbox as optb
 def onset_period(
     pp,
     deltat=None,
-    max_dry_frac_rainfall=0.3,
+    max_dry_frac_rainfall=0.1,
     refine=False,
     precip_threshold=None,
     intensity_threshold=None,
@@ -60,15 +60,22 @@ def onset_period(
     if refine:
         for ons_ix in range(len(fd)):
             this_pp = pp[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]
-            fd[ons_ix], lns[ons_ix] = optb.RefineOns(
-                pp, pp.mean(dim="time") * max_dry_frac_rainfall
+            this_flt = flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]
+            new_fd, new_ln=optb.RefineOns(
+                this_pp, this_flt.max() * max_dry_frac_rainfall
             )
+            fd[ons_ix]+=new_fd
+            lns[ons_ix]=new_ln
+            
 
     if precip_threshold:
         if pp.mean(dim="time") < precip_threshold:
             return np.array([np.nan]), np.array([np.nan])
 
-    elif intensity_threshold:
+    if intensity_threshold:
+        # if "%" in intensity_threshold:
+        #     percentile = intensity_threshold.split("%")[0]
+        #     intensity_threshold=pp.mean()*(percentile/100)
         ons_ix=0
         while ons_ix in range(len(fd)):
             this_grd_mean = (grd[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean()
