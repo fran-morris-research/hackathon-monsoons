@@ -28,7 +28,9 @@ from onset_utils import onset_period_1d
 
 print("imports done")
 max_periods = 2
-outdir = "/home/users/franmorr/hk26/hackathon-monsoons/onset_identification/onset_dates/"
+outdir = (
+    "/home/users/franmorr/hk26/hackathon-monsoons/onset_identification/onset_dates/"
+)
 plot = False
 zooms = [
     # 3,
@@ -93,8 +95,8 @@ for sim in [
 
         first_days = first_days.assign_coords(period=np.arange(max_periods))
         last_days = last_days.assign_coords(period=np.arange(max_periods))
-        first_days=first_days.rename("first_day_of_period")
-        last_days=last_days.rename("last_day_of_period")
+        first_days = first_days.rename("first_day_of_period")
+        last_days = last_days.rename("last_day_of_period")
         dwtps = xr.merge([first_days, last_days])
         dwtps.to_netcdf(f"{outdir}/{sim}_zoom_{zoom}_dwtps.nc")
 
@@ -123,4 +125,4 @@ for sim in [
             label="day of year",
         )
 
-    plt.savefig(f"images/{sim}_zooms_{''.join(zooms)}.png")
+        plt.savefig(f"images/{sim}_zooms_{''.join([str(zoom) for zoom in zooms])}.png")
