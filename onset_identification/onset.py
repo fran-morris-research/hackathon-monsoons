@@ -2,6 +2,12 @@ import datetime as dt
 import os
 import sys
 
+# project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
+# if project_root not in sys.path:
+#     sys.path.insert(0, project_root)
+# Filter out annoying warning.
+import warnings
+
 import cartopy.crs as ccrs
 import cmocean as cmo
 import easygems.healpix as egh
@@ -10,14 +16,7 @@ import intake
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-
-project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-# Filter out annoying warning.
-import warnings
-
-from utils import get_nn_lon_lat_index, haversine, hp_mods, hp_to_latlon
+from utils import hp_mods, hp_to_latlon
 
 warnings.filterwarnings(
     "ignore",
@@ -25,23 +24,35 @@ warnings.filterwarnings(
     category=FutureWarning,
 )
 
-import OnsetPeriod_toolbox as optb
-from onset_utils import onset_period, onset_period_1d, seasonality_index
+from onset_utils import onset_period_1d
 
 print("imports done")
 max_periods = 2
-outdir = "onset_dates/"
-# zooms = [3, 4, 5, 6]
-zooms = [7, 8,9,]
-# zooms = [3,4]
+outdir = "/home/users/franmorr/hk26/hackathon-monsoons/onset_identification/onset_dates/"
+plot = False
+zooms = [
+    # 3,
+    # 4,
+    # 5,
+    # 6,
+    7,
+    8,
+    9,
+]
+
 labels = ["(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", "(h)", "(i)", "(j)", "(k)"]
 projection = ccrs.PlateCarree()
 
 # Open catalog.
-url = 'https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml'
-cat = intake.open_catalog(url)['UK']
+url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
+cat = intake.open_catalog(url)["UK"]
 
-for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
+for sim in [
+    "um_glm_n1280_GAL9_v2_hk26",
+    "um_glm_n2560_RAL3p3_tuned_hk26",
+    "um_glm_n2560_CoMA9_hk26",
+    "um_glm_n1280_CoMA9_hk26",
+]:
     sim_cat = cat[sim]
     fig, axes = plt.subplots(
         len(zooms),
@@ -53,12 +64,12 @@ for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
     )
     label_ix = 0
     for zoom_ix, zoom in enumerate(zooms):
-        print(sim,zoom)
+        print(sim, zoom)
         ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
-        ds_latlon = hp_to_latlon(ds,zoom)
+        ds_latlon = hp_to_latlon(ds, zoom)
         pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
-        pp_latlon*=3600
-        pp_latlon["units"]="mm h-1"
+        pp_latlon *= 3600
+        pp_latlon["units"] = "mm h-1"
         first_days, last_days = xr.apply_ufunc(
             onset_period_1d,
             pp_latlon,
@@ -68,7 +79,7 @@ for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
             kwargs={
                 "max_periods": max_periods,
                 "max_dry_frac_rainfall": 0.1,
-                "refine": False,
+                "refine": True,
                 "precip_threshold": 0.02,
                 "intensity_threshold": None,
             },
@@ -82,31 +93,34 @@ for sim in ["um_glm_n1280_GAL9_v2_hk26", "um_glm_n2560_RAL3p3_tuned_hk26"]:
 
         first_days = first_days.assign_coords(period=np.arange(max_periods))
         last_days = last_days.assign_coords(period=np.arange(max_periods))
+        first_days=first_days.rename("first_day_of_period")
+        last_days=last_days.rename("last_day_of_period")
+        dwtps = xr.merge([first_days, last_days])
+        dwtps.to_netcdf(f"{outdir}/{sim}_zoom_{zoom}_dwtps.nc")
 
-        for ix in range(max_periods):
-            label = labels[label_ix]
-            ax = axes[zoom_ix, ix]
-            ax.set_global()
-            ax.coastlines()
-            m = (first_days.sel(period=ix) % 365).plot(
-                ax=ax, vmin=0, vmax=365, cmap=cmo.cm.phase, add_colorbar=False
-            )
+        if plot:
+            for ix in range(max_periods):
+                label = labels[label_ix]
+                ax = axes[zoom_ix, ix]
+                ax.set_global()
+                ax.coastlines()
+                m = (first_days.sel(period=ix) % 365).plot(
+                    ax=ax, vmin=0, vmax=365, cmap=cmo.cm.phase, add_colorbar=False
+                )
 
-            ax.set_title(f"{label} zoom={zoom}")
+                ax.set_title(f"{label} zoom={zoom}")
 
-            first_days.to_netcdf(f"{outdir}/{sim}_zoom_{zoom}_first_days.nc")
-            last_days.to_netcdf(f"{outdir}/{sim}_zoom_{zoom}_last_days.nc")
-            label_ix += 1
+                label_ix += 1
+    if plot:
+        fig.suptitle(sim)
+        fig.colorbar(
+            m,
+            ax=axes.ravel().tolist(),
+            orientation="horizontal",
+            fraction=0.05,
+            pad=0.07,
+            shrink=0.7,
+            label="day of year",
+        )
 
-    fig.suptitle(sim)
-    fig.colorbar(
-        m,
-        ax=axes.ravel().tolist(),
-        orientation="horizontal",
-        fraction=0.05,
-        pad=0.07,
-        shrink=0.7,
-        label="day of year",
-    )
-
-    plt.savefig(f"{sim}_zoom_{str(zooms)}.png")
+    plt.savefig(f"images/{sim}_zooms_{''.join(zooms)}.png")
