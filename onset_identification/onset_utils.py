@@ -50,13 +50,12 @@ def onset_period(
     # step 3
     rny = xr.where(((flt > 0) & (grd > 0)), 1, 0)
     fd, lns = optb.FindOnsetPeriods(rny, minlen)
-
-    #### NOT SURE WHETHER TO REMOVE P1
-    # remove first onset period if it starts at the very beginning of the sim
-    if fd and fd[0] == 0:
-        fd = fd[1:]
-        lns = lns[1:]
-
+    print("original onsets at",fd)
+    # secret step 3.5 - if there aren't any onset periods, just return nans.
+    if fd==[]:
+        return np.array([np.nan]), np.array([np.nan])
+        
+    # step 4: refine
     if refine:
         for ons_ix in range(len(fd)):
             this_pp = pp[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]
@@ -66,24 +65,33 @@ def onset_period(
             )
             fd[ons_ix]+=new_fd
             lns[ons_ix]=new_ln
-            
+    print("refined onsets at",fd)
+    # secret step 5
+    # remove first onset period if it starts at the very beginning of the sim
+    if fd and fd[0] < 20:
+        fd = fd[1:]
+        lns = lns[1:]
 
     if precip_threshold:
         if pp.mean(dim="time") < precip_threshold:
             return np.array([np.nan]), np.array([np.nan])
 
     if intensity_threshold:
-        # if "%" in intensity_threshold:
-        #     percentile = intensity_threshold.split("%")[0]
-        #     intensity_threshold=pp.mean()*(percentile/100)
-        ons_ix=0
-        while ons_ix in range(len(fd)):
-            this_grd_mean = (grd[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean()
-            if this_grd_mean < intensity_threshold:
-                fd.remove(fd[ons_ix])
-                lns.remove(lns[ons_ix])
-            else:
-                ons_ix+=1
+        if "%" in str(intensity_threshold):
+            percentile = float(intensity_threshold.split("%")[0])
+            intensity_threshold=np.percentile(flt,percentile)
+        elif type(intensity_threshold)==str:
+            raise NotImplementedError("Only absolute numerical values and percentile strings (\"{X}%\" format) have been implemented as intensity threshold quantities. Please use one of these formats.") 
+        fd = [fd[ons_ix] for ons_ix in range(len(fd)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
+        lns = [lns[ons_ix] for ons_ix in range(len(fd)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
+        # ons_ix=0
+        # while ons_ix in range(len(fd)):
+        #     this_flt_mean = 
+        #     if this_flt_mean < intensity_threshold:
+        #         fd.remove(fd[ons_ix])
+        #         lns.remove(lns[ons_ix])
+        #     else:
+        #         ons_ix+=1
 
     # shift back to day of year rather than day of simulation
     first_days = np.array(fd) + deltat
