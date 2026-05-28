@@ -32,15 +32,20 @@ outdir = (
     "/home/users/franmorr/hk26/hackathon-monsoons/onset_identification/onset_dates/"
 )
 plot = False
-zooms = [
-    # 3,
-    # 4,
-    # 5,
-    # 6,
-    7,
-    8,
-    9,
-]
+
+if sys.argv[1]!="None":
+    zooms = [int(sys.argv[1])]
+else:
+    zooms = [
+        3,
+        4,
+        5,
+        6,
+        # 7,
+        # 8,
+        # 9,
+    ]
+
 
 labels = ["(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", "(h)", "(i)", "(j)", "(k)"]
 projection = ccrs.PlateCarree()
@@ -67,38 +72,45 @@ for sim in [
     label_ix = 0
     for zoom_ix, zoom in enumerate(zooms):
         print(sim, zoom)
-        ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
-        ds_latlon = hp_to_latlon(ds, zoom)
-        pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
-        pp_latlon *= 3600
-        pp_latlon["units"] = "mm h-1"
-        first_days, last_days = xr.apply_ufunc(
-            onset_period_1d,
-            pp_latlon,
-            pp_latlon["time"],
-            input_core_dims=[["time"], ["time"]],
-            output_core_dims=[["period"], ["period"]],
-            kwargs={
-                "max_periods": max_periods,
-                "max_dry_frac_rainfall": 0.1,
-                "refine": True,
-                "precip_threshold": 0.02,
-                "intensity_threshold": None,
-            },
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[float, float],
-            dask_gufunc_kwargs={
-                "output_sizes": {"period": max_periods},
-            },
-        )
+        outfile = f"{outdir}/{sim}_zoom_{zoom}_dwtps.nc"
+        if os.path.exists(outfile):
+            print(f"{outfile} exists, skipping...")
+            if plot:
+                dwtps = xr.open_dataset(outfile)
+            pass
+        else:
+            ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
+            ds_latlon = hp_to_latlon(ds, zoom)
+            pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
+            pp_latlon *= 3600
+            pp_latlon["units"] = "mm h-1"
+            first_days, last_days = xr.apply_ufunc(
+                onset_period_1d,
+                pp_latlon,
+                pp_latlon["time"],
+                input_core_dims=[["time"], ["time"]],
+                output_core_dims=[["period"], ["period"]],
+                kwargs={
+                    "max_periods": max_periods,
+                    "max_dry_frac_rainfall": 0.1,
+                    "refine": True,
+                    "precip_threshold": 0.05,
+                    "intensity_threshold": "60%",
+                },
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[float, float],
+                dask_gufunc_kwargs={
+                    "output_sizes": {"period": max_periods},
+                },
+            )
 
-        first_days = first_days.assign_coords(period=np.arange(max_periods))
-        last_days = last_days.assign_coords(period=np.arange(max_periods))
-        first_days = first_days.rename("first_day_of_period")
-        last_days = last_days.rename("last_day_of_period")
-        dwtps = xr.merge([first_days, last_days])
-        dwtps.to_netcdf(f"{outdir}/{sim}_zoom_{zoom}_dwtps.nc")
+            first_days = first_days.assign_coords(period=np.arange(max_periods))
+            last_days = last_days.assign_coords(period=np.arange(max_periods))
+            first_days = first_days.rename("first_day_of_period")
+            last_days = last_days.rename("last_day_of_period")
+            dwtps = xr.merge([first_days, last_days])
+            dwtps.to_netcdf(outfile)
 
         if plot:
             for ix in range(max_periods):
@@ -106,7 +118,7 @@ for sim in [
                 ax = axes[zoom_ix, ix]
                 ax.set_global()
                 ax.coastlines()
-                m = (first_days.sel(period=ix) % 365).plot(
+                m = (dwtps.first_day_of_period.sel(period=ix) % 365).plot(
                     ax=ax, vmin=0, vmax=365, cmap=cmo.cm.phase, add_colorbar=False
                 )
 
