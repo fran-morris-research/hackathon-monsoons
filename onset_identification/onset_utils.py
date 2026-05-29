@@ -40,7 +40,7 @@ def onset_period(
     minlen=30
 ):
     if deltat == None:
-        deltat = pp.time.dt.dayofyear[0].item()
+        deltat = int(pp.time.dt.dayofyear[0].item())
     # step 1
     flt = optb.butterworth(pp, fwin)
 
@@ -50,9 +50,11 @@ def onset_period(
     # step 3
     rny = xr.where(((flt > 0) & (grd > 0)), 1, 0)
     fd, lns = optb.FindOnsetPeriods(rny, minlen)
-    print("original onsets at",fd)
+    # print("original onsets at",fd)
+    # print("original lengths",lns)
     # secret step 3.5 - if there aren't any onset periods, just return nans.
     if fd==[]:
+        # print("no onsets found")
         return np.array([np.nan]), np.array([np.nan])
         
     # step 4: refine
@@ -65,15 +67,27 @@ def onset_period(
             )
             fd[ons_ix]+=new_fd
             lns[ons_ix]=new_ln
-    print("refined onsets at",fd)
+
+    # print("refined onsets at",fd)
+    # print("refined lengths",lns)
+    ## on occasion this will return nans, so remove them
+    new_fd=[d for d in fd if not np.isnan(d)]
+    new_lns=[ln for ln in lns if not np.isnan(ln)]
+    fd=new_fd
+    lns=new_lns
+    
     # secret step 5
     # remove first onset period if it starts at the very beginning of the sim
     if fd and fd[0] < 20:
         fd = fd[1:]
         lns = lns[1:]
 
+    # print("double refined onsets at",fd)
+    # print("double refined lengths",lns)
+    
     if precip_threshold:
         if pp.mean(dim="time") < precip_threshold:
+            # print("pixel does not pass precip test")
             return np.array([np.nan]), np.array([np.nan])
 
     if intensity_threshold:
@@ -82,8 +96,8 @@ def onset_period(
             intensity_threshold=np.percentile(flt,percentile)
         elif type(intensity_threshold)==str:
             raise NotImplementedError("Only absolute numerical values and percentile strings (\"{X}%\" format) have been implemented as intensity threshold quantities. Please use one of these formats.") 
-        fd = [fd[ons_ix] for ons_ix in range(len(fd)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
-        lns = [lns[ons_ix] for ons_ix in range(len(fd)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
+        new_lns = [lns[ons_ix] for ons_ix in range(len(lns)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
+        new_fd = [fd[ons_ix] for ons_ix in range(len(fd)) if (flt[fd[ons_ix] : fd[ons_ix] + lns[ons_ix]]).mean() > intensity_threshold]
         # ons_ix=0
         # while ons_ix in range(len(fd)):
         #     this_flt_mean = 
@@ -92,7 +106,13 @@ def onset_period(
         #         lns.remove(lns[ons_ix])
         #     else:
         #         ons_ix+=1
+        lns=new_lns
+        fd=new_fd
+        if fd==[]:
+            # print("onset periods do not pass intensity test")
+            return np.array([np.nan]), np.array([np.nan])
 
+    # print("final onsets",fd,lns)
     # shift back to day of year rather than day of simulation
     first_days = np.array(fd) + deltat
     last_days = np.array(fd) + np.array(lns) + deltat
@@ -134,12 +154,14 @@ def onset_period_1d(
         minlen=minlen,
     )
 
+    
     first_out = np.full(max_periods, np.nan)
     last_out = np.full(max_periods, np.nan)
 
     n = min(len(first_days), max_periods)
-    first_out[:n] = first_days[:n]
-    last_out[:n] = last_days[:n]
+    if n>0:
+        first_out[:n] = first_days[:n]
+        last_out[:n] = last_days[:n]
 
     return first_out, last_out
 
