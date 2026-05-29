@@ -8,7 +8,7 @@ import cftime
 import requests
 import scipy.interpolate as sci
 
-def RefineOns(pp,thrs):  #This function is very similar to the main loop for the seasonal forecast
+def RefineOns(pp,thrs):
 
     #end of the period: day when the cummulative precipitation reaches 50% 
     #of the total precipitation during the onset period envelope

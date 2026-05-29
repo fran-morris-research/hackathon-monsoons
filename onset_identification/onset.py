@@ -2,11 +2,7 @@ import datetime as dt
 import os
 import sys
 
-# project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
-# if project_root not in sys.path:
-#     sys.path.insert(0, project_root)
-# Filter out annoying warning.
-import warnings
+
 
 import cartopy.crs as ccrs
 import cmocean as cmo
@@ -16,8 +12,14 @@ import intake
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
+
+# project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
+# if project_root not in sys.path:
+#     sys.path.insert(0, project_root)
 from utils import hp_mods, hp_to_latlon
 
+# Filter out annoying warning.
+import warnings
 warnings.filterwarnings(
     "ignore",
     message=".*The return type of `Dataset.dims` will be changed.*",
@@ -61,14 +63,15 @@ for sim in [
     "um_glm_n1280_CoMA9_hk26",
 ]:
     sim_cat = cat[sim]
-    fig, axes = plt.subplots(
-        len(zooms),
-        2,
-        # height_ratios=[1] * len(zooms) + [0.1],
-        # figsize=(6, 10),
-        subplot_kw={"projection": projection},
-        layout="constrained",
-    )
+    if plot:
+        fig, axes = plt.subplots(
+            len(zooms),
+            2,
+            # height_ratios=[1] * len(zooms) + [0.1],
+            # figsize=(6, 10),
+            subplot_kw={"projection": projection},
+            layout="constrained",
+        )
     label_ix = 0
     for zoom_ix, zoom in enumerate(zooms):
         print(sim, zoom)
