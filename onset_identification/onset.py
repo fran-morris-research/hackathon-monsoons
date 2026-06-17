@@ -56,11 +56,17 @@ projection = ccrs.PlateCarree()
 url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
 cat = intake.open_catalog(url)["UK"]
 
+# for sim in [
+#     "um_glm_n1280_GAL9_v2_hk26",
+#     "um_glm_n2560_RAL3p3_tuned_hk26",
+#     "um_glm_n2560_CoMA9_hk26",
+#     "um_glm_n1280_CoMA9_hk26",
+# ]:
 for sim in [
-    "um_glm_n1280_GAL9_v2_hk26",
-    "um_glm_n2560_RAL3p3_tuned_hk26",
-    "um_glm_n2560_CoMA9_hk26",
-    "um_glm_n1280_CoMA9_hk26",
+    "ifs_tco3999-ng5_rcbmf_cf",
+    "icon_d3hp003",
+    "casesm2_10km_nocumulus",
+    "nicam_gl11",
 ]:
     sim_cat = cat[sim]
     if plot:
@@ -82,7 +88,13 @@ for sim in [
                 dwtps = xr.open_dataset(outfile)
             pass
         else:
-            ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
+            if "hk26" in sim:
+                ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
+            else: 
+                if "icon" in sim:
+                    ds = sim_cat(zoom=zoom, time_method="inst", time="PT1H").to_dask().pipe(egh.attach_coords)
+                else:
+                    ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(egh.attach_coords)
             ds_latlon = hp_to_latlon(ds, zoom)
             pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
@@ -113,6 +125,9 @@ for sim in [
             first_days = first_days.rename("first_day_of_period")
             last_days = last_days.rename("last_day_of_period")
             dwtps = xr.merge([first_days, last_days])
+            dwtps.attrs.pop("hiopy::enable", None)
+            for var in dwtps.variables:
+                dwtps[var].attrs.pop("hiopy::enable", None)
             dwtps.to_netcdf(outfile)
 
         if plot:

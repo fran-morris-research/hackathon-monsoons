@@ -3,7 +3,7 @@
 #SBATCH --account=firstrains
 #SBATCH --qos=short
 #SBATCH --time=4:00:00
-### SBATCH --mem=10GB
+### SBATCH --mem=40GB
 #SBATCH --array=1
 #SBATCH --job-name=dwtp_%a
 #SBATCH -o dwtp_lowzoom_%A_%a.out
