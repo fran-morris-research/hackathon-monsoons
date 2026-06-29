@@ -92,12 +92,7 @@ for sim in [
                 ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods).pr
             else:
                 if "icon" in sim:
-                    ds = (
-                        sim_cat(zoom=zoom, time_method="inst", time="PT1H")
-                        .to_dask()
-                        .pipe(egh.attach_coords)
-                        .pr
-                    )
+                    ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords).pr
                 elif "IMERG" in sim:
                     ds = (
                         sim_cat(zoom=zoom)

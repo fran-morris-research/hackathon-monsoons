@@ -4,7 +4,7 @@
 #SBATCH --qos=high
 #SBATCH --time=12:00:00
 #SBATCH --mem=200GB
-#SBATCH --array=9
+#SBATCH --array=7,8
 #SBATCH --job-name=dwtp_%a
 #SBATCH -o dwtp_highzoom_%A_%a.out
 #SBATCH -e dwtp_highzoom_%A_%a.err
