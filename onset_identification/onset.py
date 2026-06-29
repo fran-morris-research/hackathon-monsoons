@@ -2,8 +2,6 @@ import datetime as dt
 import os
 import sys
 
-
-
 import cartopy.crs as ccrs
 import cmocean as cmo
 import easygems.healpix as egh
@@ -39,9 +37,9 @@ if sys.argv[1]!="None":
     zooms = [int(sys.argv[1])]
 else:
     zooms = [
-        3,
-        4,
-        5,
+        # 3,
+        # 4,
+        # 5,
         6,
         # 7,
         # 8,
@@ -63,7 +61,7 @@ cat = intake.open_catalog(url)["UK"]
 #     "um_glm_n1280_CoMA9_hk26",
 # ]:
 for sim in [
-    "ifs_tco3999-ng5_rcbmf_cf",
+    # "ifs_tco3999-ng5_rcbmf_cf",
     "icon_d3hp003",
     "casesm2_10km_nocumulus",
     "nicam_gl11",
