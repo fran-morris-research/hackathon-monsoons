@@ -62,7 +62,7 @@ cat = intake.open_catalog(url)["UK"]
 #     "um_glm_n1280_CoMA9_hk26",
 # ]:
 for sim in [
-    "ifs_tco3999-ng5_rcbmf_cf",
+    # "ifs_tco3999-ng5_rcbmf_cf",
     "icon_d3hp003",
     "casesm2_10km_nocumulus",
     "nicam_gl11",
