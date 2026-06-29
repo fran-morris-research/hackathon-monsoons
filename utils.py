@@ -11,30 +11,39 @@ import math as maths
 
 import cartopy.crs as ccrs
 import easygems.healpix as egh
+import healpy as hp
 import iris
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import healpy as hp
 
-def hp_to_latlon(ds,zoom):
-    import ast
-    domain_bounds = ast.literal_eval(ds.attrs.get("regional_bounds"))
-    lon1 = domain_bounds["lower_left_lon"]
-    lon2 = domain_bounds["upper_right_lon"]
-    lat1 = domain_bounds["lower_left_lat"]
-    lat2 = domain_bounds["upper_right_lat"]
-    
+
+def hp_to_latlon(ds, zoom, regional=False):
+    if regional:
+        import ast
+
+        domain_bounds = ast.literal_eval(ds.attrs.get("regional_bounds"))
+        lon1 = domain_bounds["lower_left_lon"]
+        lon2 = domain_bounds["upper_right_lon"]
+        lat1 = domain_bounds["lower_left_lat"]
+        lat2 = domain_bounds["upper_right_lat"]
+    else:
+        lon1 = 0
+        lon2 = 360
+        lat1 = -90
+        lat2 = 90
+
     # Call function to compute nlon, nlat based on zoom level
-    nlon, nlat = healpix_zoom_to_grid_area_match(zoom) #, lat1, lat2, lon1, lon2)
+    nlon, nlat = healpix_zoom_to_grid_area_match(zoom)  # , lat1, lat2, lon1, lon2)
     lons = np.linspace(lon1, lon2, nlon)
     lats = np.linspace(lat1, lat2, nlat)
-    
+
     # Get healpix_index coord corresponding to lat/lon mesh
     idx = get_nn_lon_lat_index(2**zoom, lons, lats)
 
     return ds.sel(cell=idx)
+
 
 def healpix_zoom_to_grid_area_match(zoom):
     nside = 2.0**zoom
@@ -51,12 +60,14 @@ def healpix_zoom_to_grid_area_match(zoom):
 
     return nlon, nlat
 
+
 def get_nn_lon_lat_index(nside, lons, lats):
     lons2, lats2 = np.meshgrid(lons, lats)
     return xr.DataArray(
         hp.ang2pix(nside, lons2, lats2, nest=True, lonlat=True),
         coords=[("latitude", lats), ("longitude", lons)],
     )
+
 
 def hp_mods(ds):
     """Convert from CF-compliant to be compatible with egh, and attach lat/lon coords"""
