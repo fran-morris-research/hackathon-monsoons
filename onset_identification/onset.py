@@ -2,6 +2,9 @@ import datetime as dt
 import os
 import sys
 
+# Filter out annoying warning.
+import warnings
+
 import cartopy.crs as ccrs
 import cmocean as cmo
 import easygems.healpix as egh
@@ -16,8 +19,6 @@ import xarray as xr
 #     sys.path.insert(0, project_root)
 from utils import hp_mods, hp_to_latlon
 
-# Filter out annoying warning.
-import warnings
 warnings.filterwarnings(
     "ignore",
     message=".*The return type of `Dataset.dims` will be changed.*",
@@ -33,7 +34,7 @@ outdir = (
 )
 plot = False
 
-if sys.argv[1]!="None":
+if sys.argv[1] != "None":
     zooms = [int(sys.argv[1])]
 else:
     zooms = [
@@ -61,11 +62,12 @@ cat = intake.open_catalog(url)["UK"]
 #     "um_glm_n1280_CoMA9_hk26",
 # ]:
 for sim in [
-    # "ifs_tco3999-ng5_rcbmf_cf",
+    "ifs_tco3999-ng5_rcbmf_cf",
     "icon_d3hp003",
     "casesm2_10km_nocumulus",
     "nicam_gl11",
 ]:
+    # for sim in ["IR_IMERG"]:
     sim_cat = cat[sim]
     if plot:
         fig, axes = plt.subplots(
@@ -87,14 +89,31 @@ for sim in [
             pass
         else:
             if "hk26" in sim:
-                ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods)
-            else: 
+                ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods).pr
+            else:
                 if "icon" in sim:
-                    ds = sim_cat(zoom=zoom, time_method="inst", time="PT1H").to_dask().pipe(egh.attach_coords)
+                    ds = (
+                        sim_cat(zoom=zoom, time_method="inst", time="PT1H")
+                        .to_dask()
+                        .pipe(egh.attach_coords)
+                        .pr
+                    )
+                elif "IMERG" in sim:
+                    ds = (
+                        sim_cat(zoom=zoom)
+                        .to_dask()
+                        .pipe(egh.attach_coords)
+                        .precipitation.sel(time=slice("2020-02-01", "2021-03-31"))
+                    )
+
                 else:
-                    ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(egh.attach_coords)
+                    ds = (
+                        sim_cat(zoom=zoom, time="PT1H")
+                        .to_dask()
+                        .pipe(egh.attach_coords)
+                    )
             ds_latlon = hp_to_latlon(ds, zoom)
-            pp_latlon = ds_latlon.pr.resample(time="1D").mean().chunk(dict(time=-1))
+            pp_latlon = ds_latlon.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
             pp_latlon["units"] = "mm h-1"
             first_days, last_days = xr.apply_ufunc(
