@@ -14,6 +14,7 @@ import easygems.healpix as egh
 import healpy as hp
 import iris
 import matplotlib.pyplot as plt
+import metpy.constants as mpconst
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -272,3 +273,32 @@ def load_file(
         else:
             ds = ds.interp(longitude=lons).interp(latitude=lats)
     return ds
+
+
+def geopotential_height_to_height(geopotential_height):
+    return (mpconst.Re.magnitude * geopotential_height) / (
+        mpconst.Re.magnitude - geopotential_height
+    )
+
+
+def mass_weighted_column_integral(da):
+    g = mpconst.g.magnitude
+    p = da["pressure"].values
+    dp_da = xr.DataArray(
+        np.abs(
+            np.diff(
+                np.concatenate(
+                    (
+                        [p[0] - (p[1] - p[0]) / 2],
+                        0.5 * (p[1:] + p[:-1]),
+                        [p[-1] + (p[-1] - p[-2]) / 2],
+                    )
+                )
+            )
+        ),
+        coords={"pressure": p},
+        dims=["pressure"],
+    )
+
+    int_da = (da * dp_da).sum("pressure") / g
+    return int_da
