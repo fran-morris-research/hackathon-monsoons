@@ -6,7 +6,7 @@ import cmocean as cmo
 import cartopy.crs as ccrs
 import easygems.healpix as egh
 import intake
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pltkel
 import numpy as np
 
 # import healpy as hp
@@ -31,7 +31,7 @@ import OnsetPeriod_toolbox as optb
 
 def onset_period(
     pp,
-    deltat=None,
+    deltat=0,
     max_dry_frac_rainfall=0.1,
     refine=False,
     precip_threshold=None,
@@ -39,8 +39,6 @@ def onset_period(
     fwin=60,
     minlen=30
 ):
-    if deltat == None:
-        deltat = int(pp.time.dt.dayofyear[0].item())
     # step 1
     flt = optb.butterworth(pp, fwin)
 
@@ -121,7 +119,7 @@ def onset_period(
 
 def onset_period_1d(
     pp_1d,
-    time,
+    deltat=0,
     max_periods=5,
     max_dry_frac_rainfall=0.3,
     refine=False,
@@ -138,10 +136,7 @@ def onset_period_1d(
     pp = xr.DataArray(
         pp_1d,
         dims=["time"],
-        coords={"time": time},
     )
-
-    deltat = int(pp.time.dt.dayofyear[0].item())
 
     first_days, last_days = onset_period(
         pp,
@@ -154,7 +149,6 @@ def onset_period_1d(
         minlen=minlen,
     )
 
-    
     first_out = np.full(max_periods, np.nan)
     last_out = np.full(max_periods, np.nan)
 

@@ -3,7 +3,7 @@
 #SBATCH --account=firstrains
 #SBATCH --qos=short
 #SBATCH --time=4:00:00
-### SBATCH --mem=40GB
+#SBATCH --mem=40GB
 #SBATCH --array=1
 #SBATCH --job-name=dwtp_%a
 #SBATCH -o dwtp_lowzoom_%A_%a.out
@@ -11,7 +11,8 @@
 
 module load jaspy
 source /home/users/franmorr/miniforge3/bin/activate
-conda activate hk26_env
+# conda activate hk26_env
+conda activate /home/users/franmorr/miniforge3/envs/hackathon
 
 cd /home/users/franmorr/hk26/hackathon-monsoons/
 export PYTHONUNBUFFERED=TRUE

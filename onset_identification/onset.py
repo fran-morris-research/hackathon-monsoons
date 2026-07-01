@@ -111,7 +111,7 @@ for sim in [
                         sim_cat(zoom=zoom, time="PT1H")
                         .to_dask()
                         .pipe(egh.attach_coords)
-                    )
+                    ).pr
             ds_latlon = hp_to_latlon(ds, zoom)
             pp_latlon = ds_latlon.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
@@ -120,13 +120,13 @@ for sim in [
             first_days, last_days = xr.apply_ufunc(
                 onset_period_1d,
                 pp_latlon,
-                pp_latlon["time"],
-                input_core_dims=[["time"], ["time"]],
+                input_core_dims=[["time"]],
                 output_core_dims=[["period"], ["period"]],
                 kwargs={
                     "max_periods": max_periods,
                     "max_dry_frac_rainfall": 0.1,
                     "refine": True,
+                    "deltat": int(pp_latlon.time.dt.dayofyear[0].item())
                     # "precip_threshold": 0.05,
                     # "intensity_threshold": "60%",
                 },
