@@ -38,9 +38,9 @@ if sys.argv[1] != "None":
     zooms = [int(sys.argv[1])]
 else:
     zooms = [
-        # 3,
-        # 4,
-        # 5,
+        3,
+        4,
+        5,
         6,
         # 7,
         # 8,
@@ -62,12 +62,16 @@ cat = intake.open_catalog(url)["UK"]
 #     "um_glm_n1280_CoMA9_hk26",
 # ]:
 for sim in [
-    # "ifs_tco3999-ng5_rcbmf_cf",
-    "icon_d3hp003",
+#     "ifs_tco3999-ng5_rcbmf_cf",
+#     "icon_d3hp003",
     # "casesm2_10km_nocumulus",
-    "nicam_gl11",
+#     "nicam_gl11",
+    # "arp-gem-2p6km",
+    "scream-dkrz",
 ]:
     # for sim in ["IR_IMERG"]:
+
+    
     sim_cat = cat[sim]
     if plot:
         fig, axes = plt.subplots(
@@ -88,6 +92,7 @@ for sim in [
                 dwtps = xr.open_dataset(outfile)
             pass
         else:
+            print("opening catalogue")
             if "hk26" in sim:
                 ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods).pr
             else:
@@ -111,6 +116,7 @@ for sim in [
             pp_latlon = ds_latlon.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
             pp_latlon["units"] = "mm h-1"
+            print("calculating onset")
             first_days, last_days = xr.apply_ufunc(
                 onset_period_1d,
                 pp_latlon,
@@ -124,11 +130,13 @@ for sim in [
                     # "precip_threshold": 0.05,
                     # "intensity_threshold": "60%",
                 },
+                
                 vectorize=True,
                 dask="parallelized",
-                output_dtypes=[float, float],
+                # output_dtypes=[float, float],
                 dask_gufunc_kwargs={
                     "output_sizes": {"period": max_periods},
+                    "meta": (np.array((), dtype=float), np.array((), dtype=float))
                 },
             )
 
@@ -140,6 +148,7 @@ for sim in [
             dwtps.attrs.pop("hiopy::enable", None)
             for var in dwtps.variables:
                 dwtps[var].attrs.pop("hiopy::enable", None)
+            print(f"saving to {outfile}")
             dwtps.to_netcdf(outfile)
 
         if plot:
