@@ -64,7 +64,7 @@ cat = intake.open_catalog(url)["UK"]
 for sim in [
     # "ifs_tco3999-ng5_rcbmf_cf",
     "icon_d3hp003",
-    "casesm2_10km_nocumulus",
+    # "casesm2_10km_nocumulus",
     "nicam_gl11",
 ]:
     # for sim in ["IR_IMERG"]:
@@ -91,7 +91,7 @@ for sim in [
             if "hk26" in sim:
                 ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(hp_mods).pr
             else:
-                if "icon" in sim:
+                if "icon" in sim or "nicam" in sim:
                     ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords).pr
                 elif "IMERG" in sim:
                     ds = (
