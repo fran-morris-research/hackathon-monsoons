@@ -62,14 +62,14 @@ cat = intake.open_catalog(url)["UK"]
 #     "um_glm_n1280_CoMA9_hk26",
 # ]:
 for sim in [
-#     "ifs_tco3999-ng5_rcbmf_cf",
+    # "ifs_tco3999-ng5_rcbmf_cf",
 #     "icon_d3hp003",
     # "casesm2_10km_nocumulus",
-#     "nicam_gl11",
-    # "arp-gem-2p6km",
-    "scream-dkrz",
+    # "nicam_gl11",
+    "arp-gem-2p6km",
+    # "scream-dkrz",
 ]:
-    # for sim in ["IR_IMERG"]:
+# for sim in ["IR_IMERG"]:
 
     
     sim_cat = cat[sim]
@@ -103,16 +103,15 @@ for sim in [
                         sim_cat(zoom=zoom)
                         .to_dask()
                         .pipe(egh.attach_coords)
-                        .precipitation.sel(time=slice("2020-02-01", "2021-03-31"))
+                        .precipitation
                     )
-
                 else:
                     ds = (
                         sim_cat(zoom=zoom, time="PT1H")
                         .to_dask()
                         .pipe(egh.attach_coords)
                     ).pr
-            ds_latlon = hp_to_latlon(ds, zoom)
+            ds_latlon = hp_to_latlon(ds, zoom).sel(time=slice("2020-02-01", "2021-03-31"))
             pp_latlon = ds_latlon.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
             pp_latlon["units"] = "mm h-1"
