@@ -5,3 +5,4 @@
 *.pyc
 */.ipynb_checkpoints/*
 onset_identification/onset_dates/.ipynb_checkpoints/guide_to_files-checkpoint.md
+*.zarr*
