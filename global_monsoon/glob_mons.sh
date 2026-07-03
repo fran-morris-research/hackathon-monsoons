@@ -17,4 +17,4 @@ cd /home/users/franmorr/hk26/hackathon-monsoons/
 export PYTHONUNBUFFERED=TRUE
 export PYTHONPATH=$(pwd)
 
-python onset_identification/compute_global_monsoon.py
+python global_monsoon/compute_global_monsoon.py
