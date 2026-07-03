@@ -16,11 +16,10 @@ outdir = (
 outfile = f"{outdir}/chirps_2020_dwtps.nc"
 if os.path.exists(outfile):
     print(f"{outfile} exists, skipping...")
-pr_latlon = xr.open_dataset(
+pp_latlon = xr.open_dataset(
     "/home/users/franmorr/firstrains/OnsetPeriod/data/CHIRPS/CHIRPS_precip.day.total_1981-2024.025dg.aw.nc"
 ).total_precipitation.sel(time=slice("2020-02-01", "2021-03-31"))
-pr_latlon = pr_latlon.rename({"latitude": "lat", "longitude": "lon"})
-
+pp_latlon = pp_latlon.rename({"latitude": "lat", "longitude": "lon"})
 print("calculating onset")
 first_days, last_days = xr.apply_ufunc(
     onset_period_1d,

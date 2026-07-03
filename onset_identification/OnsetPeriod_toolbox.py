@@ -2171,8 +2171,12 @@ def butterworth(indat,cutoff,ftype='lowpass'):
     padd1 = indat[:int(2*cutoff)][::-1]
     padd2 = indat[-int(2*cutoff):][::-1]
     paddannual = np.hstack((padd1,indat,padd2))
-    b, a = butter(2, 1/float(cutoff),btype=ftype)
-    y = filtfilt(b, a, paddannual[~np.isnan(paddannual)])
+    valid_data = paddannual[~np.isnan(paddannual)]
+    if len(valid_data) <= 9:
+        y = np.full(len(valid_data), np.nan)
+    else:
+        b, a = butter(2, 1/float(cutoff), btype=ftype)
+        y = filtfilt(b, a, valid_data)
 
     outdat=np.zeros(paddannual.shape); outdat[:]=np.nan
     outdat[~np.isnan(paddannual)]=y
