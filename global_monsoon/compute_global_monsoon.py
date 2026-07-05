@@ -24,9 +24,10 @@ sims = [
     # "um_glm_n2560_RAL3p3_tuned_hk26",
     # "ifs_tco3999-ng5_rcbmf_cf",
     # "icon_d3hp003",
-    "casesm2_10km_nocumulus",
-    "nicam_gl11",
-    "arp-gem-2p6km",
+    # "casesm2_10km_nocumulus",
+    # "nicam_gl11",
+    # "arp-gem-2p6km",
+    "IR_IMERG"
 ]
 zoom_prime = 7
 
@@ -118,7 +119,10 @@ for sim_ix, sim in enumerate(sims):
                 .sel(time=slice("2020-03-01", "2021-02-28"))
             )
 
-            pr *= 3600 * 24
+            if "IMERG" in sim:
+                pr *= 24
+            else:
+                pr *= 3600 * 24
             pr["units"] = "mm day-1"
             plot = restrict_proportion(pr, proportion=0.55) & restrict_diff(pr, lim=2)
             plot.to_zarr(outdir)
