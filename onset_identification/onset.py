@@ -66,10 +66,10 @@ for sim in [
 #     "icon_d3hp003",
     # "casesm2_10km_nocumulus",
     # "nicam_gl11",
-    "arp-gem-2p6km",
+     "arp-gem-2p6km",
     # "scream-dkrz",
 ]:
-# for sim in ["IR_IMERG"]:
+#for sim in ["IR_IMERG"]:
 
     
     sim_cat = cat[sim]

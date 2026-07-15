@@ -21,6 +21,9 @@ url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
 cat = intake.open_catalog(url)["UK"]
 
 sims = [
+    "um_glm_n1280_GAL9_v2_hk26",
+    "um_glm_n2560_CoMA9_hk26",
+    "um_glm_n1280_CoMA9_hk26",
     # "um_glm_n2560_RAL3p3_tuned_hk26",
     # "ifs_tco3999-ng5_rcbmf_cf",
     # "icon_d3hp003",
@@ -91,7 +94,7 @@ for sim_ix, sim in enumerate(sims):
     else:
         zooms = [zoom_prime]
     for zoom_ix, zoom in enumerate(zooms):
-        outdir = f"masks/{sim}_zoom_{zoom}.zarr"
+        outdir = f"global_monsoon/masks/{sim}_zoom_{zoom}.zarr"
         if os.path.exists(outdir):
             print(f"{outdir} exists - skipping...")
         else:

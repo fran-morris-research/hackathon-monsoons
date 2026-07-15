@@ -3,7 +3,7 @@
 #SBATCH --account=firstrains
 #SBATCH --qos=high
 #SBATCH --time=12:00:00
-#SBATCH --mem=800GB
+#SBATCH --mem=1000GB
 #SBATCH --array=8
 #SBATCH --job-name=dwtp_%a
 #SBATCH -o dwtp_highzoom_%A_%a.out
