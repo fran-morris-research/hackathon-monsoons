@@ -74,6 +74,15 @@ def hp_mods(ds):
     return ds.rename({"healpix_index": "cell"}).pipe(egh.attach_coords)
 
 
+def ifs_hp_mods(ds):
+    return (
+        ds.assign_coords({"cell": ds.value})
+        .rename({"value": "cell"})
+        .set_xindex("cell")
+        .pipe(egh.attach_coords)
+    )
+
+
 def plot_all_fields(ds_plot):
     """Plot all fields for a given dataset. Assumes that each field is 2D - i.e. sel(time=..., [pressure=...]) has been applied"""
     zoom = ds_plot.crs.attrs["refinement_level"]
