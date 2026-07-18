@@ -18,6 +18,44 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+domains = {
+    "global": {"lonmin": -180, "lonmax": 180, "latmin": -90, "latmax": 90},
+    "SAm": {"lonmin": -80, "lonmax": -30, "latmin": -40, "latmax": 10},
+    "SAf": {"lonmin": 10, "lonmax": 55, "latmin": -40, "latmax": 0},
+    "WAf": {"lonmin": -30, "lonmax": 30, "latmin": -5, "latmax": 25},
+    "SAs": {"lonmin": 60, "lonmax": 100, "latmin": 0, "latmax": 35},
+    "Ind": {"lonmin": 69, "lonmax": 89, "latmin": 8, "latmax": 29},
+    "EAs": {"lonmin": 90, "lonmax": 140, "latmin": 0, "latmax": 50},
+    "Aus": {"lonmin": 110, "lonmax": 160, "latmin": -30, "latmax": 0},
+}
+
+sims = [
+    "um_glm_n2560_RAL3p3_tuned_hk26",
+    "icon_d3hp003",
+    "casesm2_10km_nocumulus",
+    "nicam_gl11",
+    "ifs_tco3999-ng5_rcbmf_cf",
+]
+rainfall_obs = ["IMERG_IR", "CHIRPS"]
+sim_labels = {
+    "um_glm_n2560_RAL3p3_tuned_hk26": "UM-RAL3",
+    "icon_d3hp003": "ICON",
+    "casesm2_10km_nocumulus": "CAS-ESMv2",
+    "nicam_gl11": "NICAM",
+    "ifs_tco3999-ng5_rcbmf_cf": "IFS",
+}
+sim_colors = {
+    "um_glm_n2560_RAL3p3_tuned_hk26": "xkcd:light olive green",
+    "icon_d3hp003": "xkcd:dark cyan",
+    "casesm2_10km_nocumulus": "xkcd:terra cotta",
+    "nicam_gl11": "xkcd:medium purple",
+    "ifs_tco3999-ng5_rcbmf_cf": "xkcd:cerulean",    
+}
+
+
+def relon(ds):
+    return ds.assign_coords(longitude=(((ds.longitude + 180) % 360) - 180))
+
 
 def hp_to_latlon(ds, zoom, regional=False):
     if regional:
