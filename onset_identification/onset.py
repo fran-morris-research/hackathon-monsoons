@@ -17,7 +17,7 @@ import xarray as xr
 # project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
 # if project_root not in sys.path:
 #     sys.path.insert(0, project_root)
-from utils import hp_mods, hp_to_latlon
+from utils import hp_mods, hp_to_latlon, ifs_hp_mods
 
 warnings.filterwarnings(
     "ignore",
@@ -63,10 +63,12 @@ cat = intake.open_catalog(url)["UK"]
 # ]:
 for sim in [
     # "ifs_tco3999-ng5_rcbmf_cf",
+    "ifs_tco3999-ng5_deepoff",
 #     "icon_d3hp003",
+    # "icon_ngc4008",
     # "casesm2_10km_nocumulus",
     # "nicam_gl11",
-     "arp-gem-2p6km",
+     # "arp-gem-2p6km",
     # "scream-dkrz",
 ]:
 #for sim in ["IR_IMERG"]:
@@ -105,6 +107,16 @@ for sim in [
                         .pipe(egh.attach_coords)
                         .precipitation
                     )
+                elif "ifs" in sim:
+                    zoom = 7
+                    ds = (
+                        sim_cat(zoom=zoom)
+                        .to_dask()
+                        .pipe(ifs_hp_mods)
+                        .tp.rename({"tp": "pr"})
+                        / 3.6
+                    )
+                    ds.attrs["units"] = "kg m-2 s-1"
                 else:
                     ds = (
                         sim_cat(zoom=zoom, time="PT1H")

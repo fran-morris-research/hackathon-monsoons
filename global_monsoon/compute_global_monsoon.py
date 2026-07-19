@@ -15,22 +15,24 @@ warnings.filterwarnings(
     message=".*The return type of `Dataset.dims` will be changed.*",
     category=FutureWarning,
 )
-from utils import get_nn_lon_lat_index, haversine, hp_mods, hp_to_latlon
+from utils import get_nn_lon_lat_index, haversine, hp_mods, hp_to_latlon, ifs_hp_mods
 
 url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
 cat = intake.open_catalog(url)["UK"]
 
 sims = [
-    "um_glm_n1280_GAL9_v2_hk26",
-    "um_glm_n2560_CoMA9_hk26",
-    "um_glm_n1280_CoMA9_hk26",
+    # "um_glm_n1280_GAL9_v2_hk26",
+    # "um_glm_n2560_CoMA9_hk26",
+    # "um_glm_n1280_CoMA9_hk26",
     # "um_glm_n2560_RAL3p3_tuned_hk26",
     # "ifs_tco3999-ng5_rcbmf_cf",
     # "icon_d3hp003",
     # "casesm2_10km_nocumulus",
     # "nicam_gl11",
     # "arp-gem-2p6km",
-    "IR_IMERG"
+    # "icon_ngc4008",
+    "ifs_tco3999-ng5_deepoff",
+    # "IR_IMERG"
 ]
 zoom_prime = 7
 
@@ -108,6 +110,16 @@ for sim_ix, sim in enumerate(sims):
                     ds = sim_cat(zoom=9).to_dask().pipe(egh.attach_coords).precipitation
                 elif "arp" in sim:
                     ds = sim_cat(zoom=8).to_dask().pipe(egh.attach_coords).pr
+                elif "ifs" in sim:
+                    zoom = 7
+                    ds = (
+                        sim_cat(zoom=zoom)
+                        .to_dask()
+                        .pipe(ifs_hp_mods)
+                        .tp.rename({"tp": "pr"})
+                        / 3.6
+                    )
+                    ds.attrs["units"] = "kg m-2 s-1"
                 else:
                     ds = (
                         sim_cat(zoom=zoom, time="PT1H")

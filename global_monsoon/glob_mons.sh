@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --partition=standard
 #SBATCH --account=firstrains
-#SBATCH --qos=short
+#SBATCH --qos=high
 #SBATCH --time=4:00:00
-#SBATCH --mem=100GB
+#SBATCH --mem=300GB
 #SBATCH --array=1
 #SBATCH --job-name=global_monsoon
 #SBATCH -o glob_mons_%A.out
