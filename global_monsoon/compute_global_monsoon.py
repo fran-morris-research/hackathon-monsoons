@@ -116,7 +116,7 @@ for sim_ix, sim in enumerate(sims):
                         sim_cat(zoom=zoom)
                         .to_dask()
                         .pipe(ifs_hp_mods)
-                        .tp.rename({"tp": "pr"})
+                        .tp.rename("pr")
                         / 3.6
                     )
                     ds.attrs["units"] = "kg m-2 s-1"

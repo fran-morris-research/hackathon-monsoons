@@ -63,17 +63,16 @@ cat = intake.open_catalog(url)["UK"]
 # ]:
 for sim in [
     # "ifs_tco3999-ng5_rcbmf_cf",
-    "ifs_tco3999-ng5_deepoff",
-#     "icon_d3hp003",
+    # "ifs_tco3999-ng5_deepoff",
+    # "icon_d3hp003",
     # "icon_ngc4008",
     # "casesm2_10km_nocumulus",
     # "nicam_gl11",
-     # "arp-gem-2p6km",
+    "arp-gem-2p6km",
     # "scream-dkrz",
 ]:
-#for sim in ["IR_IMERG"]:
+    # for sim in ["IR_IMERG"]:
 
-    
     sim_cat = cat[sim]
     if plot:
         fig, axes = plt.subplots(
@@ -110,10 +109,7 @@ for sim in [
                 elif "ifs" in sim:
                     zoom = 7
                     ds = (
-                        sim_cat(zoom=zoom)
-                        .to_dask()
-                        .pipe(ifs_hp_mods)
-                        .tp.rename({"tp": "pr"})
+                        sim_cat(zoom=zoom).to_dask().pipe(ifs_hp_mods).tp.rename("pr")
                         / 3.6
                     )
                     ds.attrs["units"] = "kg m-2 s-1"
@@ -123,7 +119,9 @@ for sim in [
                         .to_dask()
                         .pipe(egh.attach_coords)
                     ).pr
-            ds_latlon = hp_to_latlon(ds, zoom).sel(time=slice("2020-02-01", "2021-03-31"))
+            ds_latlon = hp_to_latlon(ds, zoom).sel(
+                time=slice("2020-02-01", "2021-03-31")
+            )
             pp_latlon = ds_latlon.resample(time="1D").mean().chunk(dict(time=-1))
             pp_latlon *= 3600
             pp_latlon["units"] = "mm h-1"
@@ -137,17 +135,16 @@ for sim in [
                     "max_periods": max_periods,
                     "max_dry_frac_rainfall": 0.1,
                     "refine": True,
-                    "deltat": int(pp_latlon.time.dt.dayofyear[0].item())
+                    "deltat": int(pp_latlon.time.dt.dayofyear[0].item()),
                     # "precip_threshold": 0.05,
                     # "intensity_threshold": "60%",
                 },
-                
                 vectorize=True,
                 dask="parallelized",
                 # output_dtypes=[float, float],
                 dask_gufunc_kwargs={
                     "output_sizes": {"period": max_periods},
-                    "meta": (np.array((), dtype=float), np.array((), dtype=float))
+                    "meta": (np.array((), dtype=float), np.array((), dtype=float)),
                 },
             )
 

@@ -51,14 +51,25 @@ um_sims = [
 ]
 rainfall_obs = ["IMERG_IR", "CHIRPS"]
 sim_labels = {
-    "um_glm_n2560_RAL3p3_tuned_hk26": "UM-RAL3-5km",
-    "um_glm_n1280_GAL9_v2_hk26": "UM-GAL9-10km",
-    "um_glm_n2560_CoMA9_hk26": "UM-CoMA9-5km",
-    "um_glm_n1280_CoMA9_hk26": "UM-CoMA9-10km",
+    "um_glm_n2560_RAL3p3_tuned_hk26": "UM-RAL3",
     "icon_d3hp003": "ICON",
     "casesm2_10km_nocumulus": "CAS-ESMv2",
     "nicam_gl11": "NICAM",
     "ifs_tco3999-ng5_rcbmf_cf": "IFS",
+}
+
+sim_specific_labels = {
+    "um_glm_n2560_RAL3p3_tuned_hk26": "UM-RAL3-5km",
+    "um_glm_n1280_GAL9_v2_hk26": "UM-GAL9-10km",
+    "um_glm_n2560_CoMA9_hk26": "UM-CoMA9-5km",
+    "um_glm_n1280_CoMA9_hk26": "UM-CoMA9-10km",
+    "icon_d3hp003": "ICON-atmos only",
+    "icon_ngc4008": "ICON-nextGEMS",
+    "casesm2_10km_nocumulus": "CAS-ESMv2",
+    "nicam_gl11": "NICAM",
+    "ifs_tco3999-ng5_rcbmf_cf": "IFS-rbcmf",
+    "ifs_tco3999-ng5_rcbmf": "IFS-rbcmf",
+    "ifs_tco3999-ng5_deepoff": "IFS-deepoff",
 }
 sim_colors = {
     "um_glm_n2560_RAL3p3_tuned_hk26": "xkcd:light olive green",
@@ -66,9 +77,12 @@ sim_colors = {
     "um_glm_n2560_CoMA9_hk26": "xkcd:dark sea green",
     "um_glm_n1280_CoMA9_hk26": "xkcd:dark green",
     "icon_d3hp003": "xkcd:dark cyan",
+    "icon_ngc4008": "xkcd:dark aqua",
     "casesm2_10km_nocumulus": "xkcd:terra cotta",
     "nicam_gl11": "xkcd:medium purple",
     "ifs_tco3999-ng5_rcbmf_cf": "xkcd:cerulean",
+    "ifs_tco3999-ng5_rcbmf": "xkcd:cerulean",
+    "ifs_tco3999-ng5_deepoff": "xkcd:royal blue",
 }
 
 
