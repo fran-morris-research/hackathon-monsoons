@@ -100,8 +100,8 @@ def calc_meridional_energy_flux(vH):
 
 
 def main():
-    era5 = True
-    dyamond = False
+    era5 = False
+    dyamond = True
     if era5:
         era5_path = (
             "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
@@ -122,7 +122,7 @@ def main():
         print("calculating h")
         h = calculate_mse(ta, zg, hus)
         print("calculating H")
-        H = mass_weighted_column_integral(h, sp)
+        H = mass_weighted_column_integral(h, ps)
         monthly_H = H.resample(time="1ME").mean()
         print("saving H")
         monthly_H.to_netcdf("monthly_era5_MSE.nc")
@@ -138,7 +138,7 @@ def main():
         url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
         cat = intake.open_catalog(url)["online"]
         zoom = 5
-        for sim in sims_new:
+        for sim in sims_new[3:]:
             sim_cat = cat[sim]
             print(sim)
             H_outfile = f"monthly_{sim}_MSE_zoom_{zoom}.nc"
@@ -200,6 +200,8 @@ def main():
                         )
                         if max(ds.longitude) > 180:
                             ds = relon(ds).sortby("longitude")
+                        if "cas" in sim:
+                            ds.rename({"lev":"pressure"})
                         va = ds.va
                         ta = ds.ta
                         hus = ds.hus
@@ -223,8 +225,6 @@ def main():
                             .sel(time=slice("2020-03-01", "2021-02-28")),
                             zoom,
                         )
-                        if max(ds.longitude) > 180:
-                            ds = relon(ds).sortby("longitude")
                         ds = ds.rename(
                             {
                                 "u": "ua",
@@ -233,6 +233,7 @@ def main():
                                 "t": "ta",
                                 "z": "zg",
                                 "sp": "ps",
+                                "level": "pressure"
                             }
                         )
                         ps = ds.ps
@@ -251,8 +252,6 @@ def main():
                             .sel(time=slice("2020-03-01", "2021-02-28")),
                             zoom,
                         )
-                        if max(ds.longitude) > 180:
-                            ds = relon(ds).sortby("longitude")
                         ps = ds.ps
                         va = ds.va
                         ta = ds.ta
