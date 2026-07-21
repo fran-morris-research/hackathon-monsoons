@@ -56,6 +56,7 @@ sim_labels = {
     "casesm2_10km_nocumulus": "CAS-ESMv2",
     "nicam_gl11": "NICAM",
     "ifs_tco3999-ng5_rcbmf_cf": "IFS",
+    "ifs_tco3999-ng5_rcbmf": "IFS",
 }
 
 sim_specific_labels = {

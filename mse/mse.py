@@ -42,16 +42,24 @@ print("imports done")
 
 def calculate_mse(
     temperature,
-    geopotential_height,
+    geopotential,
     specific_humidity,
 ):
-    g = mpconst.g.magnitude
     cp = mpconst.dry_air_spec_heat_press.magnitude
     Lv = mpconst.water_heat_vaporization.magnitude
 
     # compute h
-    return cp * temperature + geopotential_height + Lv * specific_humidity
+    return cp * temperature + geopotential + Lv * specific_humidity
 
+def calculate_dse(
+    temperature,
+    geopotential_height,
+):
+    g = mpconst.g.magnitude
+    cp = mpconst.dry_air_spec_heat_press.magnitude
+
+    # compute h
+    return cp * temperature + geopotential_height
 
 def mass_weighted_column_integral(da, sfc_p):
     da = da.sortby("pressure")
@@ -138,6 +146,8 @@ def main():
         url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
         cat = intake.open_catalog(url)["online"]
         zoom = 5
+        g = mpconst.g.magnitude
+        
         for sim in sims_new[3:]:
             sim_cat = cat[sim]
             print(sim)
@@ -160,7 +170,7 @@ def main():
                     va = ds.va
                     ta = ds.ta
                     hus = ds.hus
-                    zg = ds.zg
+                    zg = ds.zg*g
                     del ds
                     ps = hp_to_latlon(
                         sim_cat(zoom=zoom, time="PT1H")
@@ -188,7 +198,7 @@ def main():
                         va = ds.va
                         ta = ds.ta
                         hus = ds.hus
-                        zg = ds.zg
+                        zg = ds.zg*g
                         del ds
                     elif "nicam" in sim or "cas" in sim:
                         ds = hp_to_latlon(
@@ -198,14 +208,13 @@ def main():
                             .sel(time=slice("2020-03-01", "2021-02-28")),
                             zoom,
                         )
+                        ds.rename({"lev":"pressure"})
                         if max(ds.longitude) > 180:
                             ds = relon(ds).sortby("longitude")
-                        if "cas" in sim:
-                            ds.rename({"lev":"pressure"})
                         va = ds.va
                         ta = ds.ta
                         hus = ds.hus
-                        zg = ds.zg
+                        zg = ds.zg*g
                         del ds
                         ps = hp_to_latlon(
                             sim_cat(zoom=zoom, time="PT3H")
@@ -256,7 +265,7 @@ def main():
                         va = ds.va
                         ta = ds.ta
                         hus = ds.hus
-                        zg = ds.zg
+                        zg = ds.zg*g
                         del ds
 
                 print("calculating h")
