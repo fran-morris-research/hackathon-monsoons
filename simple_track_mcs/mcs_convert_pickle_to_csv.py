@@ -79,7 +79,7 @@ class ConvertPickleToCSV:
             datestamp = date.strftime("%Y%m")
             print(datestamp)
 
-            fname = Path("/gws/nopw/j04/kscale/USERS/cscullio/DYAMOND3/data_reruns/simpleTrack") / model_id/ f"tracks_{datestamp}.p"
+            fname = Path("/gws/ssde/j25b/kscale/USERS/cscullio/DYAMOND3/data_reruns/simpleTrack") / model_id/ f"tracks_{datestamp}.p"
 
             with open(fname, "rb") as f:
                 data_full = pickle.load(f)
@@ -141,7 +141,8 @@ class ConvertPickleToCSV:
                         pass
 
             df_combined = pd.concat(dfs)
-            save_file = Path("/gws/ssde/j25a/ncas_climate/vol1/users/ekarl20/data/hackathon_monsoon_data/") / model_id / f"tracks_{datestamp}.csv"
+            # save_file = Path("/gws/ssde/j25a/ncas_climate/vol1/users/ekarl20/data/hackathon_monsoon_data/") / model_id / f"tracks_{datestamp}.csv"
+            save_file = Path("/work/scratch-nopw2/franmorr/hk/mcs/") / model_id / f"tracks_{datestamp}.csv"
             df_combined.to_csv(save_file, index=False)
             
             print("Saved to file:")
@@ -157,8 +158,9 @@ if __name__ == "__main__":
     end_date = datetime.datetime(2021,2,2)
     model_id = models[-1]
 
-    dictionary = {  "start_date": start_date,
-                    "end_date": end_date,
-                    "model_id": model_id}
-
-    aa = ConvertPickleToCSV(**dictionary)
+    for model_id in models[:3]:
+        dictionary = {  "start_date": start_date,
+                        "end_date": end_date,
+                        "model_id": model_id}
+    
+        aa = ConvertPickleToCSV(**dictionary)
