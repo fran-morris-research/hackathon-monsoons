@@ -138,7 +138,7 @@ def main():
         zoom = 5
         g = mpconst.g.magnitude
 
-        for sim in um_sims:
+        for sim in sims_new[:
             sim_cat = cat[sim]
             print(f"\nProcessing simulation: {sim}")
 
@@ -202,8 +202,7 @@ def main():
                 ds = hp_to_latlon(raw_3d, zoom)
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
-                if "cas" in sim:
-                    ds = ds.rename({"lev": "pressure"})
+                ds = ds.rename({"lev": "pressure"})
 
                 va, ta, hus, zg = ds.va, ds.ta, ds.hus, ds.zg*g
 
@@ -213,32 +212,36 @@ def main():
                     .pipe(egh.attach_coords)["ps"]
                     .sel(time=slice("2020-03-01", "2021-02-28"))
                 )
+                if "nicam" in sim: 
+                    raw_ps=raw_ps.interp_like(ds)
                 ps = hp_to_latlon(raw_ps, zoom)
                 if max(ps.longitude) > 180:
                     ps = relon(ps).sortby("longitude")
 
             elif "ifs" in sim:
-                cur_zoom = 7
-                raw_ds = sim_cat(zoom=cur_zoom, dim="3D").to_dask().pipe(ifs_hp_mods)
-                raw_ds = raw_ds[["v", "t", "q", "z", "sp"]].sel(
+                zoom = 7
+                raw_ds = sim_cat(zoom=zoom, dim="3D").to_dask().pipe(ifs_hp_mods)
+                raw_ds = raw_ds[["v", "t", "q", "z",]].sel(
                     time=slice("2020-03-01", "2021-02-28")
                 )
 
-                ds = hp_to_latlon(raw_ds, cur_zoom)
+                ds = hp_to_latlon(raw_ds, zoom)
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
-
+                ps = hp_to_latlon(sim_cat(zoom=zoom,dim="2D").to_dask().pipe(ifs_hp_mods).sp.rename("ps"),zoom)
+                
+                if max(ps.longitude) > 180:
+                    ps = relon(ps).sortby("longitude")
                 ds = ds.rename(
                     {
                         "v": "va",
                         "q": "hus",
                         "t": "ta",
                         "z": "zg",
-                        "sp": "ps",
                         "level": "pressure",
                     }
                 )
-                ps, va, ta, hus, zg = ds.ps, ds.va, ds.ta, ds.hus, ds.zg
+                ps, va, ta, hus, zg = ps, ds.va, ds.ta, ds.hus, ds.zg
 
             else:
                 raw_ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords)  # Default
