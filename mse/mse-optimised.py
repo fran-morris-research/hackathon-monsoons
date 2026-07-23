@@ -52,10 +52,16 @@ def calculate_mse(
 
 
 def mass_weighted_column_integral(da, sfc_p):
+    if da.pressure.units == "hPa" and sfc_p.units == "Pa":
+        sfc_p /= 100
+        sfc_p.attrs["units"] = "hPa"
+    if da.pressure.units == "Pa" and sfc_p.units == "hPa":
+        p /= 100
+        p.attrs["units"] = "hPa"
+
     da = da.sortby("pressure")
     g = mpconst.g.magnitude
     p = da["pressure"].values.astype(float)  # 1D mid-level pressures (Pa)
-
     # build interface/bound values (half-levels)
     mid = 0.5 * (p[1:] + p[:-1])
     bounds = np.concatenate(
@@ -98,8 +104,8 @@ def calc_meridional_energy_flux(vH):
 
 
 def main():
-    era5 = False
-    dyamond = True
+    era5 = True
+    dyamond = False
     if era5:
         era5_path = (
             "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
@@ -117,28 +123,37 @@ def main():
         hus = era5_dyperiod.specific_humidity
         zg = era5_dyperiod.geopotential
         ps = era5_dyperiod.surface_pressure
-        print("calculating h")
-        h = calculate_mse(ta, zg, hus)
-        print("calculating H")
+
+        del era5_dyperiod
+
+        h = calculate_mse(ta, zg, hus) 
         H = mass_weighted_column_integral(h, ps)
         monthly_H = H.resample(time="1ME").mean()
-        print("saving H")
-        monthly_H.to_netcdf("monthly_era5_MSE.nc")
         print("calculating vH")
         vH = mass_weighted_column_integral(va * h, ps)
         print("calculating energy flux")
         monthly_energy_flux = (
             calc_meridional_energy_flux(vH).resample(time="1ME").mean()
         )
-        print("saving energy flux")
-        monthly_energy_flux.to_netcdf("monthly_era5_MEF.nc")
+
+        with xr.set_options(use_flox=False):
+            monthly_H = H.resample(time="1ME").mean().rename("column_integrated_mse")
+            monthly_energy_flux = (
+                calc_meridional_energy_flux(vH).resample(time="1ME").mean()
+            ).rename("meridional_mse_flux")
+
+        print("Executing Dask pipeline and writing to disk...")
+        xr.save_mfdataset(
+            [monthly_H.to_dataset(), monthly_energy_flux.to_dataset()],
+            ["mse/era5_mse.nc", "mef/era5_mef.nc"],
+        )
     if dyamond:
         url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
         cat = intake.open_catalog(url)["online"]
         zoom = 5
         g = mpconst.g.magnitude
 
-        for sim in sims_new[:
+        for sim in sims_new:
             sim_cat = cat[sim]
             print(f"\nProcessing simulation: {sim}")
 
@@ -163,7 +178,7 @@ def main():
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
 
-                va, ta, hus, zg = ds.va, ds.ta, ds.hus, ds.zg*g
+                va, ta, hus, zg = ds.va, ds.ta, ds.hus, ds.zg * g
 
                 raw_ps = (
                     sim_cat(zoom=zoom, time="PT1H")
@@ -189,7 +204,7 @@ def main():
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
 
-                ps, va, ta, hus, zg = ds.ps, ds.va, ds.ta, ds.hus, ds.zg*g
+                ps, va, ta, hus, zg = ds.ps, ds.va, ds.ta, ds.hus, ds.zg * g
 
             elif "nicam" in sim or "cas" in sim:
                 raw_3d = (
@@ -204,7 +219,7 @@ def main():
                     ds = relon(ds).sortby("longitude")
                 ds = ds.rename({"lev": "pressure"})
 
-                va, ta, hus, zg = ds.va, ds.ta, ds.hus, ds.zg*g
+                va, ta, hus, zg = ds.va, ds.ta, ds.hus, ds.zg * g
 
                 raw_ps = (
                     sim_cat(zoom=zoom, time="PT3H")
@@ -212,8 +227,8 @@ def main():
                     .pipe(egh.attach_coords)["ps"]
                     .sel(time=slice("2020-03-01", "2021-02-28"))
                 )
-                if "nicam" in sim: 
-                    raw_ps=raw_ps.interp_like(ds)
+                if "nicam" in sim:
+                    raw_ps = raw_ps.interp_like(ds)
                 ps = hp_to_latlon(raw_ps, zoom)
                 if max(ps.longitude) > 180:
                     ps = relon(ps).sortby("longitude")
@@ -221,15 +236,26 @@ def main():
             elif "ifs" in sim:
                 zoom = 7
                 raw_ds = sim_cat(zoom=zoom, dim="3D").to_dask().pipe(ifs_hp_mods)
-                raw_ds = raw_ds[["v", "t", "q", "z",]].sel(
-                    time=slice("2020-03-01", "2021-02-28")
-                )
+                raw_ds = raw_ds[
+                    [
+                        "v",
+                        "t",
+                        "q",
+                        "z",
+                    ]
+                ].sel(time=slice("2020-03-01", "2021-02-28"))
 
                 ds = hp_to_latlon(raw_ds, zoom)
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
-                ps = hp_to_latlon(sim_cat(zoom=zoom,dim="2D").to_dask().pipe(ifs_hp_mods).sp.rename("ps"),zoom)
-                
+                ps = hp_to_latlon(
+                    sim_cat(zoom=zoom, dim="2D")
+                    .to_dask()
+                    .pipe(ifs_hp_mods)
+                    .sp.rename("ps"),
+                    zoom,
+                )
+
                 if max(ps.longitude) > 180:
                     ps = relon(ps).sortby("longitude")
                 ds = ds.rename(
@@ -242,6 +268,7 @@ def main():
                     }
                 )
                 ps, va, ta, hus, zg = ps, ds.va, ds.ta, ds.hus, ds.zg
+                ds.pressure.attrs["units"] = "hPa"
 
             else:
                 raw_ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords)  # Default
@@ -253,7 +280,7 @@ def main():
                 if max(ds.longitude) > 180:
                     ds = relon(ds).sortby("longitude")
 
-                ps, va, ta, hus, zg = ds.ps, ds.va, ds.ta, ds.hus, ds.zg*g
+                ps, va, ta, hus, zg = ds.ps, ds.va, ds.ta, ds.hus, ds.zg * g
 
             print("Building lazy computation graph...")
 
@@ -265,7 +292,9 @@ def main():
             vH_2d = mass_weighted_column_integral(va * h, ps)
 
             with xr.set_options(use_flox=False):
-                monthly_H = H_2d.resample(time="1ME").mean().rename("column_integrated_mse")
+                monthly_H = (
+                    H_2d.resample(time="1ME").mean().rename("column_integrated_mse")
+                )
                 monthly_energy_flux = (
                     calc_meridional_energy_flux(vH_2d).resample(time="1ME").mean()
                 ).rename("meridional_mse_flux")
