@@ -32,6 +32,31 @@ def get_rainfall(sim, zoom, region=None):
     return ds
 
 
+def get_winds(sim, zoom, region=None):
+    url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
+    cat = intake.open_catalog(url)["online"]
+    sim_cat = cat[sim]
+    if "hk26" in sim:
+        ds = sim_cat(zoom=zoom, time="PT3H").to_dask().pipe(hp_mods)[["ua","va"]]
+    else:
+        if "icon" in sim:
+            ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords)[["ua","va"]]
+        if  "nicam" in sim:
+            ds = sim_cat(zoom=zoom,time="PT6H").to_dask().pipe(egh.attach_coords)[["ua","va"]] 
+        elif "arp" in sim:
+            zoom = 8
+            ds = sim_cat(zoom=zoom).to_dask().pipe(egh.attach_coords)[["ua","va"]]
+        elif "ifs" in sim:
+            zoom = 7
+            ds = sim_cat(zoom=zoom).to_dask().pipe(ifs_hp_mods)[["u_wind","v_wind"]]
+        else:
+            ds = sim_cat(zoom=zoom, time="PT1H").to_dask().pipe(egh.attach_coords).pr
+    ds = hp_to_latlon(ds, zoom)
+    if max(ds.longitude) > 180:
+        ds = relon(ds).sortby("longitude")
+    return ds
+
+
 def relon(ds):
     return ds.assign_coords(longitude=(((ds.longitude + 180) % 360) - 180))
 

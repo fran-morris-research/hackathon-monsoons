@@ -104,8 +104,8 @@ def calc_meridional_energy_flux(vH):
 
 
 def main():
-    era5 = True
-    dyamond = False
+    era5 = False
+    dyamond = True
     if era5:
         era5_path = (
             "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3"
@@ -145,7 +145,7 @@ def main():
         print("Executing Dask pipeline and writing to disk...")
         xr.save_mfdataset(
             [monthly_H.to_dataset(), monthly_energy_flux.to_dataset()],
-            ["mse/era5_mse.nc", "mef/era5_mef.nc"],
+            ["mse/era5_mse.nc", "mse/era5_mef.nc"],
         )
     if dyamond:
         url = "https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml"
@@ -153,7 +153,7 @@ def main():
         zoom = 5
         g = mpconst.g.magnitude
 
-        for sim in sims_new:
+        for sim in um_sims:
             sim_cat = cat[sim]
             print(f"\nProcessing simulation: {sim}")
 

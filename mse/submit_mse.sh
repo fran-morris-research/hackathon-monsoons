@@ -3,7 +3,7 @@
 #SBATCH --account=firstrains
 #SBATCH --qos=high
 #SBATCH --time=12:00:00
-#SBATCH --mem=1000GB
+#SBATCH --mem=500GB
 #SBATCH --array=1
 #SBATCH --job-name=mse
 #SBATCH -o mse_%A.out

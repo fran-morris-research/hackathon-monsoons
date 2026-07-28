@@ -8,3 +8,4 @@ onset_identification/onset_dates/.ipynb_checkpoints/guide_to_files-checkpoint.md
 *.zarr*
 onset_identification/onset_dates/old/.ipynb_checkpoints/guide_to_files-checkpoint.md
 *.png
+*.gif
